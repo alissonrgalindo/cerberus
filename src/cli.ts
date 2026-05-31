@@ -166,11 +166,10 @@ async function runClaudeHook(): Promise<void> {
 
 function runInstallHooks(): void {
   const cwd = process.cwd();
-  const { hookPath, wrapped } = installGitHook(cwd);
+  const { hookPath, wrapped, husky } = installGitHook(cwd);
   const settingsPath = registerClaudeHook(cwd);
-  process.stdout.write(
-    chalk.green(`✓ git pre-commit hook: ${hookPath}${wrapped ? ' (wrapped existing hook)' : ''}\n`),
-  );
+  const suffix = husky ? ' (appended to husky hook)' : wrapped ? ' (wrapped existing hook)' : '';
+  process.stdout.write(chalk.green(`✓ git pre-commit hook: ${hookPath}${suffix}\n`));
   process.stdout.write(chalk.green(`✓ Claude Code PreToolUse hook: ${settingsPath}\n`));
   process.stdout.write(chalk.dim('Test with: git commit --allow-empty -m test\n'));
 }

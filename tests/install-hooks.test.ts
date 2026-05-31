@@ -57,6 +57,24 @@ describe('install-hooks (integration)', () => {
     expect(JSON.stringify(settings.hooks.PreToolUse)).toContain('claude-hook');
   });
 
+  it('appends to an existing husky pre-commit hook without touching the shims', () => {
+    const dir = makeRepo();
+    mkdirSync(join(dir, '.husky', '_'), { recursive: true });
+    writeFileSync(join(dir, '.husky', 'pre-commit'), '#!/bin/sh\npnpm exec lint-staged\n', { mode: 0o755 });
+    const res = cli(dir, ['install-hooks']);
+    expect(res.stdout).toContain('appended to husky hook');
+    const hook = readFileSync(join(dir, '.husky', 'pre-commit'), 'utf8');
+    expect(hook).toContain('pnpm exec lint-staged'); // original preserved
+    expect(hook).toContain('quality-gate-hook'); // gate appended
+    expect(hook).toContain('check --staged --mode pre-commit');
+    expect(hook).toMatch(/^\s*set -e\b/m); // prior commands still block on failure
+
+    // idempotent: a second install does not duplicate the block
+    cli(dir, ['install-hooks']);
+    const after = readFileSync(join(dir, '.husky', 'pre-commit'), 'utf8');
+    expect(after.match(/quality-gate-hook/g)).toHaveLength(1);
+  });
+
   it('backs up and wraps a pre-existing hook', () => {
     const dir = makeRepo();
     writeFileSync(join(dir, '.git', 'hooks', 'pre-commit'), '#!/usr/bin/env sh\necho hi\n', { mode: 0o755 });

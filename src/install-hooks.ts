@@ -15,13 +15,49 @@ export function cliInvocation(): string {
   return `node "${process.argv[1]}"`;
 }
 
-export type GitHookResult = { hookPath: string; wrapped: boolean };
+export type GitHookResult = { hookPath: string; wrapped: boolean; husky: boolean };
+
+/** Husky-managed repos point core.hooksPath at .husky/_; we must edit .husky/pre-commit, not the shims. */
+function isHuskyRepo(cwd: string): boolean {
+  return existsSync(join(cwd, '.husky', '_')) || existsSync(join(cwd, '.husky', 'pre-commit'));
+}
+
+/**
+ * Appends the gate to an existing husky pre-commit hook (never touches the
+ * .husky/_ shims). Idempotent via the marker; preserves prior commands.
+ */
+function installHuskyHook(cwd: string): GitHookResult {
+  const hookPath = join(cwd, '.husky', 'pre-commit');
+  let content = existsSync(hookPath) ? readFileSync(hookPath, 'utf8') : '';
+  if (content.includes(MARKER)) return { hookPath, wrapped: true, husky: true };
+
+  const hadContent = content.trim().length > 0;
+  if (!hadContent) {
+    content = '#!/usr/bin/env sh\nset -e\n';
+  } else {
+    if (!content.endsWith('\n')) content += '\n';
+    // `set -e` so any pre-existing command (e.g. lint-staged) still blocks the
+    // commit on failure once our gate is appended after it.
+    if (!/^\s*set -e\b/m.test(content)) {
+      const lines = content.split('\n');
+      lines.splice(lines[0].startsWith('#!') ? 1 : 0, 0, 'set -e');
+      content = `${lines.join('\n')}`;
+      if (!content.endsWith('\n')) content += '\n';
+    }
+  }
+
+  const block = `${MARKER}\n[ "$QUALITY_GATE_BYPASS" = "1" ] || ${cliInvocation()} check --staged --mode pre-commit --format human || exit 1\n`;
+  writeFileSync(hookPath, content + block, { mode: 0o755 });
+  return { hookPath, wrapped: hadContent, husky: true };
+}
 
 /**
  * Installs (or wraps) a git pre-commit hook that runs the gate on staged files.
- * If a non-quality-gate hook already exists, it is backed up and called first.
+ * Detects husky and appends to .husky/pre-commit; otherwise writes to the git
+ * hooks dir, backing up and wrapping any pre-existing non-quality-gate hook.
  */
 export function installGitHook(cwd: string): GitHookResult {
+  if (isHuskyRepo(cwd)) return installHuskyHook(cwd);
   const hooksDir = gitHooksDir(cwd);
   mkdirSync(hooksDir, { recursive: true });
   const hookPath = join(hooksDir, 'pre-commit');
@@ -46,7 +82,7 @@ ${preamble}${cliInvocation()} check --staged --mode pre-commit --format human
 `;
   writeFileSync(hookPath, content, { mode: 0o755 });
   chmodSync(hookPath, 0o755);
-  return { hookPath, wrapped };
+  return { hookPath, wrapped, husky: false };
 }
 
 /**
