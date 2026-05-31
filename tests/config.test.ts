@@ -33,6 +33,13 @@ describe('config loader', () => {
     expect(config.thresholds.cyclomaticComplexity).toBe(10);
   });
 
+  it('loads the node-cli and monorepo presets', () => {
+    const nodeCli = loadConfig(tempProject({ extends: '@quality-gate/node-cli' }));
+    expect(nodeCli.tsxOverrides.cognitiveComplexity).toBe(15);
+    const monorepo = loadConfig(tempProject({ extends: '@quality-gate/monorepo-turborepo' }));
+    expect(monorepo.ignore).toContain('**/.turbo/**');
+  });
+
   it('throws on an unknown preset', () => {
     expect(() => loadConfig(tempProject({ extends: '@quality-gate/nope' }))).toThrow(/Unknown preset/);
   });

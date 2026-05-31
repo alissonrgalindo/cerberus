@@ -4,7 +4,9 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import chalk from 'chalk';
 import { measureCognitive } from './analyzers/cognitive-complexity.js';
+import { analyzeCoverage } from './analyzers/coverage-delta.js';
 import { measureCyclomatic } from './analyzers/cyclomatic-complexity.js';
+import { analyzeDuplication } from './analyzers/duplication.js';
 import { measureTypeSafety } from './analyzers/type-safety.js';
 import { hashFileSet, incrementAttempt } from './attempts.js';
 import { BASELINE_FILE, loadBaseline, saveBaseline } from './baseline.js';
@@ -16,7 +18,7 @@ import { getFileContent, getStagedFiles } from './git-diff.js';
 import { applyTodoInjection, stageFiles } from './injector.js';
 import { installGitHook, registerClaudeHook } from './install-hooks.js';
 import { reportHuman, reportJson, type RunReport } from './reporter.js';
-import type { Baseline } from './types.js';
+import type { Baseline, SetViolation } from './types.js';
 
 type CheckOutcome = { report: RunReport; exitCode: number };
 
@@ -58,6 +60,33 @@ async function performCheck(opts: { cwd: string; files: string[]; mode?: string 
     reports.push(report);
   }
 
+  // Set-level analyzers (coverage, duplication) are expensive and only run when
+  // enforcing a commit. Their violations are merged into the per-file reports.
+  const notes: string[] = [];
+  if (opts.mode === 'pre-commit') {
+    const enabled = new Set(config.preCommit.enabled);
+    const setViolations: SetViolation[] = [];
+
+    if (enabled.has('duplication')) {
+      setViolations.push(...analyzeDuplication(files, cwd, config));
+    }
+    if (enabled.has('coverage')) {
+      const cov = await analyzeCoverage(files.map((f) => relKey(cwd, f)), cwd, baseline, config);
+      if (cov.skipped && cov.reason) notes.push(`coverage: ${cov.reason}`);
+      setViolations.push(...cov.violations);
+    }
+
+    for (const sv of setViolations) {
+      let report = reports.find((r) => r.file === sv.file);
+      if (!report) {
+        report = { file: sv.file, passed: true, violations: [], metrics: {} };
+        reports.push(report);
+      }
+      report.violations.push(sv.violation);
+      report.passed = false;
+    }
+  }
+
   const anyViolation = reports.some((r) => !r.passed);
   let status: RunReport['status'] = anyViolation ? 'QUALITY_GATE_FAIL' : 'PASS';
   let exitCode = anyViolation ? 1 : 0;
@@ -76,7 +105,10 @@ async function performCheck(opts: { cwd: string; files: string[]; mode?: string 
     }
   }
 
-  return { report: { status, passed: exitCode === 0, attempt, files: reports }, exitCode };
+  return {
+    report: { status, passed: exitCode === 0, attempt, files: reports, notes: notes.length ? notes : undefined },
+    exitCode,
+  };
 }
 
 async function runCheck(args: {

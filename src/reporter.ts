@@ -6,6 +6,7 @@ export type RunReport = {
   passed: boolean;
   attempt?: string;
   files: FileReport[];
+  notes?: string[];
 };
 
 export function reportJson(report: RunReport): void {
@@ -13,6 +14,9 @@ export function reportJson(report: RunReport): void {
 }
 
 export function reportHuman(report: RunReport): void {
+  for (const note of report.notes ?? []) {
+    process.stderr.write(chalk.dim(`  note: ${note}\n`));
+  }
   const failed = report.files.filter((f) => !f.passed);
 
   if (report.status === 'PASS_WITH_TODO') {

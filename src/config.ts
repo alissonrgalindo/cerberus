@@ -1,7 +1,9 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { defaultConfig } from './defaults.js';
+import monorepoPreset from './presets/monorepo-turborepo.json';
 import nextjsPreset from './presets/nextjs.json';
+import nodeCliPreset from './presets/node-cli.json';
 import type { Config } from './types.js';
 
 type PartialConfig = Partial<Config> & { extends?: string };
@@ -10,6 +12,10 @@ type PartialConfig = Partial<Config> & { extends?: string };
 const PRESETS: Record<string, PartialConfig> = {
   '@quality-gate/nextjs': nextjsPreset as PartialConfig,
   nextjs: nextjsPreset as PartialConfig,
+  '@quality-gate/node-cli': nodeCliPreset as PartialConfig,
+  'node-cli': nodeCliPreset as PartialConfig,
+  '@quality-gate/monorepo-turborepo': monorepoPreset as PartialConfig,
+  'monorepo-turborepo': monorepoPreset as PartialConfig,
 };
 
 export const CONFIG_FILE = '.quality-gate.json';

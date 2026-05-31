@@ -1,0 +1,27 @@
+{
+  "thresholds": {
+    "cognitiveComplexity": 15,
+    "cyclomaticComplexity": 10,
+    "newAnyCount": 0,
+    "newTsIgnoreCount": 0,
+    "coverageDelta": 0,
+    "duplicationLines": 30
+  },
+  "ignore": [
+    "**/*.test.ts",
+    "**/__tests__/**",
+    "**/dist/**",
+    "**/migrations/**",
+    "**/generated/**"
+  ],
+  "maxRefactorAttempts": 2,
+  "preCommit": {
+    "enabled": ["cognitive", "cyclomatic", "type-safety", "coverage", "duplication"],
+    "parallel": true,
+    "timeoutMs": 30000
+  },
+  "tsxOverrides": {
+    "cognitiveComplexity": 15,
+    "ignoreJsxExpressionContainerSimple": false
+  }
+}

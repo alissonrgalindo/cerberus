@@ -12,7 +12,8 @@
     "dev": "tsup --watch",
     "test": "vitest",
     "lint": "eslint src/",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "pack:plugin": "pnpm run build && rm -f code-quality-gate.plugin && zip -rq code-quality-gate.plugin plugin.json hooks skills commands dist README.md"
   },
   "dependencies": {
     "cognitive-complexity-ts": "^0.8.1",

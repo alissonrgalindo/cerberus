@@ -65,6 +65,9 @@ export type Baseline = {
 /** Per-symbol measurement shared by analyzers and the baseline builder. */
 export type FunctionScore = { name: string; line: number; score: number };
 
+/** A violation attributed to a specific file by a set-level analyzer (coverage/duplication). */
+export type SetViolation = { file: string; violation: Violation };
+
 /** Stable baseline key for a measured function: bare name when named, name:line when anonymous. */
 export function baselineKey(fn: FunctionScore): string {
   return fn.name === '<anonymous>' ? `${fn.name}:${fn.line}` : fn.name;

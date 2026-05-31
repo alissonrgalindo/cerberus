@@ -28,7 +28,13 @@ function makeRepo(): string {
   git(dir, ['config', 'user.email', 't@t.com']);
   git(dir, ['config', 'user.name', 't']);
   git(dir, ['config', 'commit.gpgsign', 'false']);
-  writeFileSync(join(dir, '.quality-gate.json'), JSON.stringify({ extends: '@quality-gate/nextjs' }));
+  writeFileSync(
+    join(dir, '.quality-gate.json'),
+    JSON.stringify({
+      extends: '@quality-gate/nextjs',
+      preCommit: { enabled: ['cognitive', 'cyclomatic', 'type-safety'] },
+    }),
+  );
   writeFileSync(join(dir, '.gitignore'), '.quality-gate-attempts.json\n');
   mkdirSync(join(dir, 'src'));
   writeFileSync(join(dir, 'src', 'clean.ts'), 'export const ok = 1;\n');

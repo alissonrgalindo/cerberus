@@ -25,7 +25,13 @@ const NEW_BAD = `export function deep(x: number, raw: unknown): any {
 
 function makeProject(): string {
   const dir = mkdtempSync(join(tmpdir(), 'qg-cli-'));
-  writeFileSync(join(dir, '.quality-gate.json'), JSON.stringify({ extends: '@quality-gate/nextjs' }));
+  writeFileSync(
+    join(dir, '.quality-gate.json'),
+    JSON.stringify({
+      extends: '@quality-gate/nextjs',
+      preCommit: { enabled: ['cognitive', 'cyclomatic', 'type-safety'] },
+    }),
+  );
   mkdirSync(join(dir, 'src'));
   writeFileSync(join(dir, 'src', 'clean.ts'), CLEAN);
   return dir;
