@@ -4,7 +4,7 @@
   "description": "Pre-commit code quality gate for AI-agent generated code. Validates complexity, type-safety, coverage, and duplication.",
   "author": "Alison Galindo",
   "hooks": {
-    "Stop": "hooks/claude-stop.sh"
+    "PreToolUse": "hooks/claude-pretooluse.mjs"
   },
   "skills": [
     "skills/quality-audit"

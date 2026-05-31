@@ -8,12 +8,17 @@ import { measureCyclomatic } from './analyzers/cyclomatic-complexity.js';
 import { measureTypeSafety } from './analyzers/type-safety.js';
 import { hashFileSet, incrementAttempt } from './attempts.js';
 import { BASELINE_FILE, loadBaseline, saveBaseline } from './baseline.js';
+import { isGitCommit } from './commit-detect.js';
 import { CONFIG_FILE, loadConfig } from './config.js';
 import { analyzeFile, computeFileBaseline, hashContent, type FileReport } from './engine.js';
 import { toPosix, walkTsFiles } from './files.js';
 import { getFileContent, getStagedFiles } from './git-diff.js';
+import { applyTodoInjection, stageFiles } from './injector.js';
+import { installGitHook, registerClaudeHook } from './install-hooks.js';
 import { reportHuman, reportJson, type RunReport } from './reporter.js';
 import type { Baseline } from './types.js';
+
+type CheckOutcome = { report: RunReport; exitCode: number };
 
 const TS_EXT = /\.(ts|tsx|mts|cts)$/;
 const DTS_EXT = /\.d\.ts$/;
@@ -34,6 +39,46 @@ function bypassActive(): boolean {
   return process.env.QUALITY_GATE_BYPASS === '1';
 }
 
+/**
+ * Core check shared by the CLI, the git hook and the Claude Code hook.
+ * Runs analyzers over the given files and, in pre-commit mode, applies the
+ * anti-doom-loop: after maxRefactorAttempts the gate lets the commit through,
+ * injecting `// TODO: quality-gate(...)` flags and re-staging the files.
+ */
+async function performCheck(opts: { cwd: string; files: string[]; mode?: string }): Promise<CheckOutcome> {
+  const { cwd } = opts;
+  const config = loadConfig(cwd);
+  const baseline = loadBaseline(cwd);
+  const files = opts.files.filter((f) => isAnalyzable(f) && existsSync(f));
+
+  const reports: FileReport[] = [];
+  for (const abs of files) {
+    const rel = relKey(cwd, abs);
+    const report = await analyzeFile(rel, getFileContent(abs), config, baseline?.files[rel]);
+    reports.push(report);
+  }
+
+  const anyViolation = reports.some((r) => !r.passed);
+  let status: RunReport['status'] = anyViolation ? 'QUALITY_GATE_FAIL' : 'PASS';
+  let exitCode = anyViolation ? 1 : 0;
+  let attempt: string | undefined;
+
+  if (anyViolation && opts.mode === 'pre-commit') {
+    const max = config.maxRefactorAttempts;
+    const { count } = incrementAttempt(cwd, hashFileSet(files.map((f) => relKey(cwd, f))));
+    attempt = `${count}/${max}`;
+    if (count > max) {
+      status = 'PASS_WITH_TODO';
+      exitCode = 0;
+      const failing = reports.filter((r) => !r.passed);
+      for (const r of failing) applyTodoInjection(cwd, r, attempt);
+      stageFiles(cwd, failing.map((r) => r.file));
+    }
+  }
+
+  return { report: { status, passed: exitCode === 0, attempt, files: reports }, exitCode };
+}
+
 async function runCheck(args: {
   file?: string;
   staged?: boolean;
@@ -46,46 +91,56 @@ async function runCheck(args: {
     process.exit(0);
   }
 
-  const config = loadConfig(cwd);
-  const baseline = loadBaseline(cwd);
+  const files = args.file
+    ? [toAbs(cwd, args.file)]
+    : getStagedFiles(cwd).map((f) => toAbs(cwd, f));
 
-  let candidates: string[];
-  if (args.file) candidates = [toAbs(cwd, args.file)];
-  else candidates = getStagedFiles(cwd).map((f) => toAbs(cwd, f));
-
-  const files = candidates.filter((f) => isAnalyzable(f) && existsSync(f));
-
-  const reports: FileReport[] = [];
-  for (const abs of files) {
-    const rel = relKey(cwd, abs);
-    const content = getFileContent(abs);
-    const fileBaseline = baseline?.files[rel];
-    const report = await analyzeFile(rel, content, config, fileBaseline);
-    reports.push(report);
-  }
-
-  const anyViolation = reports.some((r) => !r.passed);
-  let status: RunReport['status'] = anyViolation ? 'QUALITY_GATE_FAIL' : 'PASS';
-  let exitCode = anyViolation ? 1 : 0;
-  let attempt: string | undefined;
-
-  // Attempts + anti-doom-loop only apply when enforcing a commit (pre-commit mode).
-  if (anyViolation && args.mode === 'pre-commit') {
-    const max = config.maxRefactorAttempts;
-    const { count } = incrementAttempt(cwd, hashFileSet(files.map((f) => relKey(cwd, f))));
-    if (count > max) {
-      status = 'PASS_WITH_TODO';
-      exitCode = 0;
-      attempt = `${count}/${max}`;
-    } else {
-      attempt = `${count}/${max}`;
-    }
-  }
-
-  const report: RunReport = { status, passed: exitCode === 0, attempt, files: reports };
+  const { report, exitCode } = await performCheck({ cwd, files, mode: args.mode });
   if (args.format === 'json') reportJson(report);
   else reportHuman(report);
   process.exit(exitCode);
+}
+
+/** Claude Code PreToolUse(Bash) hook: blocks an agent's `git commit` when the gate fails. */
+async function runClaudeHook(): Promise<void> {
+  let payload: { tool_name?: string; tool_input?: { command?: string }; cwd?: string };
+  try {
+    payload = JSON.parse(readFileSync(0, 'utf8'));
+  } catch {
+    process.exit(0); // not a parseable hook payload — stay out of the way
+  }
+
+  const command = payload.tool_input?.command ?? '';
+  const cwd = payload.cwd ?? process.cwd();
+  if (payload.tool_name !== 'Bash' || !isGitCommit(command)) process.exit(0);
+  if (/\[skip-quality\]/.test(command) || bypassActive()) process.exit(0);
+
+  const files = getStagedFiles(cwd).map((f) => toAbs(cwd, f));
+  if (files.length === 0) process.exit(0);
+
+  const { report, exitCode } = await performCheck({ cwd, files, mode: 'pre-commit' });
+  if (exitCode === 0) process.exit(0);
+
+  const failing = report.files.filter((f) => !f.passed);
+  const lines = failing.flatMap((f) =>
+    f.violations.map((v) => `  ${f.file} — ${v.analyzer} ${v.location}: ${v.current} > ${v.threshold}`),
+  );
+  process.stderr.write(
+    `quality-gate blocked this commit (${failing.length} file(s)):\n${lines.join('\n')}\n` +
+      `Refactor and retry, or set QUALITY_GATE_BYPASS=1 / add [skip-quality] to the message.\n`,
+  );
+  process.exit(2); // block the Bash tool call
+}
+
+function runInstallHooks(): void {
+  const cwd = process.cwd();
+  const { hookPath, wrapped } = installGitHook(cwd);
+  const settingsPath = registerClaudeHook(cwd);
+  process.stdout.write(
+    chalk.green(`✓ git pre-commit hook: ${hookPath}${wrapped ? ' (wrapped existing hook)' : ''}\n`),
+  );
+  process.stdout.write(chalk.green(`✓ Claude Code PreToolUse hook: ${settingsPath}\n`));
+  process.stdout.write(chalk.dim('Test with: git commit --allow-empty -m test\n'));
 }
 
 function runBaseline(args: { force?: boolean }): void {
@@ -183,6 +238,10 @@ function runDoctor(): void {
     line(stale === 0, stale === 0 ? 'baseline up to date' : `${stale} file(s) drifted from baseline (refresh-baseline)`);
   }
 
+  const gitHook = resolve(cwd, '.git', 'hooks', 'pre-commit');
+  const hookInstalled = existsSync(gitHook) && readFileSync(gitHook, 'utf8').includes('quality-gate-hook');
+  line(hookInstalled, hookInstalled ? 'git pre-commit hook installed' : 'git pre-commit hook missing — run "quality-gate install-hooks"');
+
   if (bypassActive()) line(false, 'QUALITY_GATE_BYPASS=1 is active — gate disabled this session');
 
   process.stdout.write(`\n${ok ? chalk.green('All good.') : chalk.yellow('Some checks need attention.')}\n\n`);
@@ -228,6 +287,13 @@ await yargs(hideBin(process.argv))
     (a) => runAudit(a),
   )
   .command('doctor', 'Diagnose config, baseline and hook state', {}, () => runDoctor())
+  .command(
+    'install-hooks',
+    'Install the git pre-commit hook and register the Claude Code hook',
+    {},
+    () => runInstallHooks(),
+  )
+  .command('claude-hook', false, {}, () => runClaudeHook())
   .demandCommand(1)
   .strict()
   .help()
