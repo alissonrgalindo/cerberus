@@ -1,0 +1,16 @@
+{
+  "name": "code-quality-gate",
+  "version": "0.0.1",
+  "description": "Pre-commit code quality gate for AI-agent generated code. Validates complexity, type-safety, coverage, and duplication.",
+  "author": "Alison Galindo",
+  "hooks": {
+    "Stop": "hooks/claude-stop.sh"
+  },
+  "skills": [
+    "skills/quality-audit"
+  ],
+  "commands": [
+    "commands/quality-check.md",
+    "commands/quality-baseline.md"
+  ]
+}
