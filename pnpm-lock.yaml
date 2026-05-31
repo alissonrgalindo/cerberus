@@ -26,6 +26,9 @@ importers:
       lint-staged:
         specifier: ^15.2.0
         version: 15.5.2
+      picomatch:
+        specifier: ^4.0.2
+        version: 4.0.4
       ts-morph:
         specifier: ^23.0.0
         version: 23.0.0
@@ -36,6 +39,9 @@ importers:
       '@types/node':
         specifier: ^20.10.0
         version: 20.19.41
+      '@types/picomatch':
+        specifier: ^3.0.1
+        version: 3.0.2
       '@types/yargs':
         specifier: ^17.0.32
         version: 17.0.35
@@ -614,6 +620,9 @@ packages:
 
   '@types/node@20.19.41':
     resolution: {integrity: sha512-ECymXOukMnOoVkC2bb1Vc/w/836DXncOg5m8Xj1RH7xSHZJWNYY6Zh7EH477vcnD5egKNNfy2RpNOmuChhFPgQ==}
+
+  '@types/picomatch@3.0.2':
+    resolution: {integrity: sha512-n0i8TD3UDB7paoMMxA3Y65vUncFJXjcUf7lQY7YyKGl6031FNjfsLs6pdLFCy2GNFxItPJG8GvvpbZc2skH7WA==}
 
   '@types/sarif@2.1.7':
     resolution: {integrity: sha512-kRz0VEkJqWLf1LLVN4pT1cg1Z9wAuvI6L97V3m2f5B76Tg8d413ddvLBPTEHAZJlnn4XSvu0FkZtViCQGVyrXQ==}
@@ -2430,6 +2439,8 @@ snapshots:
   '@types/node@20.19.41':
     dependencies:
       undici-types: 6.21.0
+
+  '@types/picomatch@3.0.2': {}
 
   '@types/sarif@2.1.7': {}
 

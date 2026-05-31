@@ -1,5 +1,11 @@
 import { Node, SyntaxKind } from 'ts-morph';
-import type { AnalyzerInput, AnalyzerResult, Violation } from '../types.js';
+import {
+  baselineKey,
+  type AnalyzerInput,
+  type AnalyzerResult,
+  type FunctionScore,
+  type Violation,
+} from '../types.js';
 import { createSourceFile } from './ts-project.js';
 
 const FUNCTION_LIKE_KINDS = new Set<SyntaxKind>([
@@ -54,47 +60,56 @@ function countDecisions(fn: Node): number {
 }
 
 function functionName(fn: Node): string {
-  if (Node.isFunctionDeclaration(fn) || Node.isMethodDeclaration(fn) || Node.isGetAccessorDeclaration(fn) || Node.isSetAccessorDeclaration(fn)) {
+  if (
+    Node.isFunctionDeclaration(fn) ||
+    Node.isMethodDeclaration(fn) ||
+    Node.isGetAccessorDeclaration(fn) ||
+    Node.isSetAccessorDeclaration(fn)
+  ) {
     const name = fn.getName();
     if (name) return name;
   }
   if (Node.isConstructorDeclaration(fn)) return 'constructor';
-  // Arrow/expression assigned to a variable: use the variable name.
+  // Arrow/expression assigned to a variable or property: use that name.
   const parent = fn.getParent();
-  if (parent && Node.isVariableDeclaration(parent)) {
-    return parent.getName();
-  }
-  if (parent && Node.isPropertyAssignment(parent)) {
-    return parent.getName();
-  }
+  if (parent && Node.isVariableDeclaration(parent)) return parent.getName();
+  if (parent && Node.isPropertyAssignment(parent)) return parent.getName();
   return '<anonymous>';
 }
 
+/** Raw measurement (no thresholds) — shared with the baseline builder. */
+export function measureCyclomatic(filePath: string, fileContent: string): FunctionScore[] {
+  const sourceFile = createSourceFile(filePath, fileContent);
+  return sourceFile
+    .getDescendants()
+    .filter(isFunctionLike)
+    .map((fn) => ({
+      name: functionName(fn),
+      line: fn.getStartLineNumber(),
+      score: 1 + countDecisions(fn),
+    }));
+}
+
 export async function analyzeCyclomatic(input: AnalyzerInput): Promise<AnalyzerResult> {
-  const sourceFile = createSourceFile(input.filePath, input.fileContent);
+  const functions = measureCyclomatic(input.filePath, input.fileContent);
   const threshold = input.config.thresholds.cyclomaticComplexity;
   const perFunctionBaseline = input.fileBaseline?.metrics.cyclomaticComplexity.perFunction;
 
   const violations: Violation[] = [];
   let max = 0;
 
-  for (const fn of sourceFile.getDescendants().filter(isFunctionLike)) {
-    const complexity = 1 + countDecisions(fn);
-    max = Math.max(max, complexity);
-    const name = functionName(fn);
-    const line = fn.getStartLineNumber();
-    const key = `${name}:${line}`;
-    const baseline = perFunctionBaseline?.[name] ?? perFunctionBaseline?.[key] ?? threshold;
-
-    if (complexity > threshold && complexity > baseline) {
+  for (const fn of functions) {
+    max = Math.max(max, fn.score);
+    const baseline = perFunctionBaseline?.[fn.name] ?? perFunctionBaseline?.[baselineKey(fn)] ?? threshold;
+    if (fn.score > threshold && fn.score > baseline) {
       violations.push({
         analyzer: 'cyclomatic-complexity',
-        location: key,
-        current: complexity,
+        location: `${fn.name}:${fn.line}`,
+        current: fn.score,
         threshold,
         baseline: perFunctionBaseline ? baseline : undefined,
-        delta: perFunctionBaseline ? complexity - baseline : undefined,
-        suggestion: `Function "${name}" has cyclomatic complexity ${complexity} (limit ${threshold}). Reduce branching or split into smaller functions.`,
+        delta: perFunctionBaseline ? fn.score - baseline : undefined,
+        suggestion: `Function "${fn.name}" has cyclomatic complexity ${fn.score} (limit ${threshold}). Reduce branching or split into smaller functions.`,
       });
     }
   }

@@ -1,5 +1,11 @@
 import { getSourceOutput } from 'cognitive-complexity-ts';
-import type { AnalyzerInput, AnalyzerResult, Violation } from '../types.js';
+import {
+  baselineKey,
+  type AnalyzerInput,
+  type AnalyzerResult,
+  type FunctionScore,
+  type Violation,
+} from '../types.js';
 
 /** Subset of the cognitive-complexity-ts JSON shape we depend on. */
 type CctsNode = {
@@ -11,14 +17,12 @@ type CctsNode = {
   inner?: CctsNode[];
 };
 
-type FlatScore = { name: string; line: number; score: number };
-
 /**
  * Recursively flattens the ccts tree into one entry per scored symbol.
  * Each function/method carries its OWN cognitive score (Sonar-style); nested
  * functions are reported separately so we can threshold each independently.
  */
-function flattenScores(nodes: CctsNode[] | undefined, out: FlatScore[]): void {
+function flattenScores(nodes: CctsNode[] | undefined, out: FunctionScore[]): void {
   if (!nodes) return;
   for (const node of nodes) {
     if (node.kind !== 'file') {
@@ -32,16 +36,21 @@ function flattenScores(nodes: CctsNode[] | undefined, out: FlatScore[]): void {
   }
 }
 
+/** Raw measurement (no thresholds) — shared with the baseline builder. */
+export function measureCognitive(filePath: string, fileContent: string): FunctionScore[] {
+  const report = getSourceOutput(fileContent, filePath) as unknown as CctsNode;
+  const flat: FunctionScore[] = [];
+  flattenScores(report.inner, flat);
+  return flat;
+}
+
 /**
  * Cognitive complexity analyzer — thin wrapper over cognitive-complexity-ts.
  * The library already discounts JSX expression containers reasonably, so the
  * only TSX adjustment we make is a separate (higher) threshold via tsxOverrides.
  */
 export async function analyzeCognitive(input: AnalyzerInput): Promise<AnalyzerResult> {
-  const report = getSourceOutput(input.fileContent, input.filePath) as unknown as CctsNode;
-
-  const flat: FlatScore[] = [];
-  flattenScores(report.inner, flat);
+  const flat = measureCognitive(input.filePath, input.fileContent);
 
   const threshold =
     input.fileType === 'tsx'
@@ -52,15 +61,14 @@ export async function analyzeCognitive(input: AnalyzerInput): Promise<AnalyzerRe
   const violations: Violation[] = [];
 
   for (const fn of flat) {
-    const key = `${fn.name}:${fn.line}`;
     // Existing function uses its own baseline as the floor; an unknown function
     // (new file or new symbol) is held to the absolute threshold.
-    const baseline = perFunctionBaseline?.[fn.name] ?? perFunctionBaseline?.[key] ?? threshold;
+    const baseline = perFunctionBaseline?.[fn.name] ?? perFunctionBaseline?.[baselineKey(fn)] ?? threshold;
     // Violation only if it both exceeds the threshold AND got worse than baseline.
     if (fn.score > threshold && fn.score > baseline) {
       violations.push({
         analyzer: 'cognitive-complexity',
-        location: key,
+        location: `${fn.name}:${fn.line}`,
         current: fn.score,
         threshold,
         baseline: perFunctionBaseline ? baseline : undefined,

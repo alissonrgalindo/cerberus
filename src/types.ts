@@ -56,6 +56,20 @@ export type FileBaseline = {
   };
 };
 
+export type Baseline = {
+  version: 1;
+  generatedAt: string;
+  files: Record<string, FileBaseline>;
+};
+
+/** Per-symbol measurement shared by analyzers and the baseline builder. */
+export type FunctionScore = { name: string; line: number; score: number };
+
+/** Stable baseline key for a measured function: bare name when named, name:line when anonymous. */
+export function baselineKey(fn: FunctionScore): string {
+  return fn.name === '<anonymous>' ? `${fn.name}:${fn.line}` : fn.name;
+}
+
 /** Detects the FileType from a path extension. Defaults to 'ts'. */
 export function fileTypeFromPath(filePath: string): FileType {
   if (filePath.endsWith('.tsx')) return 'tsx';

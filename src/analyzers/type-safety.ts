@@ -4,7 +4,7 @@ import { createSourceFile } from './ts-project.js';
 
 const SUPPRESSION_RE = /(?:\/\/|\/\*|\*)\s*@ts-(?:ignore|expect-error|nocheck)\b/;
 
-type Counts = {
+export type TypeSafetyCounts = {
   anyCount: number;
   anyLines: number[];
   asUnknownAsCount: number;
@@ -14,8 +14,8 @@ type Counts = {
 };
 
 /** Counts type-safety escape hatches via AST (never regex on raw `any` to avoid string matches). */
-function countEscapes(input: AnalyzerInput): Counts {
-  const sourceFile = createSourceFile(input.filePath, input.fileContent);
+export function measureTypeSafety(filePath: string, fileContent: string): TypeSafetyCounts {
+  const sourceFile = createSourceFile(filePath, fileContent);
 
   const anyLines: number[] = [];
   for (const node of sourceFile.getDescendantsOfKind(SyntaxKind.AnyKeyword)) {
@@ -32,7 +32,7 @@ function countEscapes(input: AnalyzerInput): Counts {
 
   // Suppression directives only carry meaning inside comments — match comment-prefixed lines.
   const tsIgnoreLines: number[] = [];
-  input.fileContent.split('\n').forEach((line, idx) => {
+  fileContent.split('\n').forEach((line, idx) => {
     if (SUPPRESSION_RE.test(line)) tsIgnoreLines.push(idx + 1);
   });
 
@@ -51,7 +51,7 @@ function fmtLines(lines: number[]): string {
 }
 
 export async function analyzeTypeSafety(input: AnalyzerInput): Promise<AnalyzerResult> {
-  const counts = countEscapes(input);
+  const counts = measureTypeSafety(input.filePath, input.fileContent);
   const baseline = input.fileBaseline?.metrics.typeSafety;
   const violations: Violation[] = [];
 
