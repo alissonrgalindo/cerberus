@@ -1,6 +1,6 @@
 # code-quality-gate
 
-A **pre-commit quality gate** for AI-agent-generated TypeScript. It measures quality on the **files you touch** (not the whole repo) and blocks commits that regress past configurable thresholds — using **delta vs. a baseline**, so legacy code isn't forced to refactor.
+A **pre-commit quality gate** for AI-agent-generated **TypeScript and Python**. It measures quality on the **files you touch** (not the whole repo) and blocks commits that regress past configurable thresholds — using **delta vs. a baseline**, so legacy code isn't forced to refactor.
 
 > Private / internal tool. Not published to npm.
 
@@ -13,16 +13,85 @@ A **pre-commit quality gate** for AI-agent-generated TypeScript. It measures qua
 | Type safety | New `any`, `as unknown as`, `@ts-ignore`/`@ts-expect-error`/`@ts-nocheck` | 0 new |
 | Coverage delta | Coverage dropping below baseline (vitest) | no drop |
 | Duplication | Copy-paste blocks (jscpd, staged files only) | 30 lines |
+| Transaction required | 2+ Drizzle mutations in a `'use server'` function without `db.transaction(...)` (DDIA ch.7) | 1 mutation |
+| Revalidate required | Server Action that mutates without `revalidatePath`/`revalidateTag`/`redirect` | — |
+| N+1 query | `await db.*` inside a `for`/`while`/`.map`/`.forEach` over an array (DDIA ch.2) | 0 |
+| Migration safety | `DROP COLUMN`, `DROP TABLE`, `RENAME COLUMN/TABLE`, `ALTER COLUMN TYPE`, `SET NOT NULL` without DEFAULT in staged `.sql` (DDIA ch.4) | 0 |
+| Silent catch | `catch {}` or `catch (e) { console.log(e) }` — error swallowing (Clean Code §7) | 0 |
+| Hallucinated import | Import of a package not present in any reachable `package.json` (LLM anti-pattern) | 0 |
+| Shallow module | Exported function that's a one-statement pass-through (Ousterhout, *A Philosophy of Software Design* ch.4) | 0 new |
+| Function length | Function body lines (Clean Code §3 — "functions should be small") | 80 lines |
+| Parameter count | Number of parameters per function (Clean Code §3.4) | 4 |
+| Secret in diff | OpenAI/Anthropic/GitHub/GitLab/Slack/AWS/Google/Stripe/npm keys, JWTs, PEM private keys, connection strings with credentials, `.env` files in staged | 0 |
+| Injection | `eval`/`new Function`, `exec()` with interpolated commands, `sql.raw()`/`.execute()`/`.query()` with interpolated SQL, unsanitized `dangerouslySetInnerHTML` | 0 |
+| New dependency | Dependency added to `package.json` with no lockfile entry (slopsquatting guard) | 0 |
 
-Complexity/type-safety run per file; coverage and duplication run once over the staged set, only at commit time.
+Complexity, type-safety, transaction-required, revalidate-required, n-plus-one-query, silent-catch, hallucinated-import, shallow-module, function-length and parameter-count run per file; coverage, duplication, migration-safety and secret-in-diff run once over the staged set. Coverage/duplication run only at commit time; migration-safety runs whenever staged `.sql` is present; secret-in-diff scans every staged file regardless of extension.
+
+### Notes on the DDIA-inspired analyzers
+
+- **transaction-required** only fires in files starting with `'use server'`. A single mutation is allowed (atomic by definition). 2+ mutations must live inside a `db.transaction(async (tx) => ...)` callback (or the enclosing function must itself already be inside one).
+- **revalidate-required** only audits exported async functions in `'use server'` files (the Server Action surface). A mutating action that calls `revalidatePath`, `revalidateTag`, or `redirect` is considered fine.
+- **n-plus-one-query** matches `await <db|tx|trx|database>.*` inside loop bodies and inside callbacks passed to `map`/`forEach`/`flatMap`/`filter`/`reduce`. Accepts a small false-positive risk in exchange for catching the dominant LLM anti-pattern; suppress with `[skip-quality]` when needed.
+- **migration-safety** parses staged `.sql` files (typically `packages/db/drizzle/*.sql`) with focused regexes. Comments are stripped, so doc-only mentions of `DROP COLUMN` do not trigger. `SET NOT NULL` is allowed when the same statement also `SET DEFAULT`s the column.
+
+### Notes on the AI-agent-specific analyzers
+
+- **silent-catch** flags empty catch blocks and catches whose body is only `console.*` calls — the #1 way an LLM "fixes" a failing test. Rethrows, returns, assignments, or any call beyond `console.*`/`logger.*`/`log.*` count as real handling.
+- **hallucinated-import** walks up to the repo root collecting every `package.json`'s declared dependency names and checks each import specifier against that union. Local paths (`./`, `../`, `@/`, `~/`) and node builtins are skipped. If no `package.json` is found at all, the analyzer no-ops (the file is being analyzed outside a project).
+- **shallow-module** only fires on `export`ed top-level functions whose body is a single return-of-call, a single call statement, or a `const x = call(); return x` pair. Suppress with a `// quality-gate-allow: shallow-module` line comment when the indirection is intentional (testing seam, public API stability).
+- **function-length / parameter-count** are delta-aware: a function already over the limit in the baseline isn't blocked unless the change makes it worse. New functions are held to the absolute threshold.
+- **secret-in-diff** runs on every staged path (not just `.ts`/`.sql`). It matches distinctive prefixes only (`sk-`, `ghp_`, `glpat-`, `xox?-`, `AKIA`, `AIza`, `sk_live_`, `whsec_`, `npm_`, `eyJ…`, PEM `-----BEGIN … PRIVATE KEY-----`, and `scheme://user:password@` connection strings with non-placeholder passwords) and blocks any committed `.env` / `.env.*` file (except `.env.example` / `.env.sample` / `.env.template`). Suppress per line with `// quality-gate-allow: secret` for test fixtures.
+- **injection** flags the injection sinks LLMs most often produce: `eval`/`new Function`, `exec`/`execSync` with interpolated commands (and `spawn` with `{ shell: true }`), `sql.raw()` with non-literals, `.execute()`/`.query()` with interpolated/concatenated SQL, and `dangerouslySetInnerHTML` with unsanitized dynamic content. Tagged templates (``db.execute(sql`…`)``) are parameterized and never flagged. Suppress per line with `// quality-gate-allow: injection`.
+- **new-dependency** guards against slopsquatting: a dep that is new in a staged `package.json` must already have a lockfile entry (i.e., a registry actually resolved it during an install). A name written straight into the manifest with no lockfile entry is exactly how a hallucinated/squatted package lands. No lockfile in the project → the analyzer stays quiet.
 
 ## How it works
 
 - **Delta, not absolute.** `quality-gate baseline` snapshots current metrics into `.quality-gate-baseline.json`. The gate only blocks when a touched file gets *worse* than its baseline. New files (no baseline) are held to the absolute threshold.
-- **Anti-doom-loop.** After `maxRefactorAttempts` (default 2) failed commits on the same file set within 30 min, the gate lets the commit through, injecting `// TODO: quality-gate(...)` flags so the debt is tracked instead of looping forever.
-- **Two triggers, one CLI.** A git `pre-commit` hook catches terminal commits; a Claude Code `PreToolUse(Bash)` hook catches an agent's `git commit` and feeds back structured violations.
+- **Anti-doom-loop.** After `maxRefactorAttempts` (default 2) failed commits on the same file set within 30 min, the gate lets the commit through, injecting `// TODO: quality-gate(...)` flags so the debt is tracked instead of looping forever. **Quality violations only** — see the security tier below.
+- **Four triggers, one CLI.** A Claude Code `PostToolUse(Edit|Write)` hook gives the agent feedback seconds after it writes the code; a git `pre-commit` hook catches terminal commits; a Claude Code `PreToolUse(Bash)` hook catches an agent's `git commit`; `check --base <ref>` runs in CI as the PR-blocking enforcement point.
+
+## Python support
+
+`.py` files flow through the same gate. v1 covers the presence-based analyzers — same names, same config, same severity tier as the TS versions:
+
+- **silent-catch**: `except: pass` / `except: ...` and except bodies that only `print`/`logging.*`.
+- **injection** (security): `eval`/`exec` with dynamic input, `os.system` / `subprocess(shell=True)` with f-strings or concatenation, `cursor.execute()` with f-string/`%`/`.format()` SQL instead of parameterized queries.
+- **hallucinated-import**: imports not declared in `pyproject.toml` (PEP 621 or Poetry) / `requirements*.txt`, with stdlib, local-module, and alias (`yaml`→`pyyaml`, `cv2`→`opencv-python`, …) handling.
+- **new-dependency** (security): new deps in a staged `pyproject.toml` must have a `poetry.lock`/`uv.lock`/`pdm.lock` entry.
+- **secret-in-diff** already scans every staged file, including `.py`.
+
+Complexity/function-shape metrics for Python (with baseline support) are a planned follow-up. Suppressions use the comment form: `# quality-gate-allow: injection`.
+
+## Security tier (non-bypassable)
+
+`secret-in-diff`, `migration-safety`, `injection`, and `new-dependency` are **security analyzers**, and every escape hatch is closed for them:
+
+- The anti-doom-loop never passes a security violation through — a leaked key with a `// TODO` is still leaked.
+- `QUALITY_GATE_BYPASS=1` and `[skip-quality]` downgrade the gate to security-only instead of disabling it.
+- They cannot be disabled via `.quality-gate.json` — the config lives in the repo, which a blocked agent can edit, so it doesn't get a vote on security.
+- The error messages shown to a blocked agent contain **no bypass instructions**.
+
+Per-line suppressions (`// quality-gate-allow: secret` / `injection`) still work — they are visible in the diff, so a human reviewer sees every exception.
+
+## CI mode (the real gate)
+
+Pre-commit hooks are advisory — anything local can be bypassed with `--no-verify`. The PR is the enforcement point:
+
+```yaml
+# .github/workflows/quality-gate.yml (consumer project)
+- uses: actions/checkout@v4
+  with: { fetch-depth: 0 }
+- run: npx quality-gate check --base "origin/${{ github.base_ref }}" --format github
+```
+
+`--format github` emits workflow commands, so every violation shows up as an **inline annotation on the PR diff** (with a `[SECURITY]` tag where applicable) instead of a log line nobody opens.
+
+`check --base <ref>` analyzes every file changed vs. the merge-base (`ref...HEAD`), exactly what the PR diff shows. See this repo's own `.github/workflows/quality-gate.yml` for a complete example.
 
 ## Quickstart
+
+> Full installation guide (including CI, Python notes, and agent rules): **[INSTALL.md](./INSTALL.md)**. With the plugin installed, the `/quality-setup` command walks an agent through the whole setup.
 
 ```bash
 # 1. From the project root, create a config (pick a preset)
@@ -38,7 +107,7 @@ npx quality-gate install-hooks
 git commit -m "..."
 ```
 
-`install-hooks` is idempotent and **wraps** any existing `pre-commit` hook (backing it up to `pre-commit.backup-quality-gate`).
+`install-hooks` is idempotent and **wraps** any existing `pre-commit` hook (backing it up to `pre-commit.backup-quality-gate`). It also registers two Claude Code hooks in `.claude/settings.json`: `PreToolUse(Bash)` (blocks failing agent commits) and `PostToolUse(Edit|Write|MultiEdit)` (runs the gate on each file the agent edits and feeds violations back immediately — the cheapest point to fix).
 
 ## Commands
 
@@ -47,6 +116,7 @@ git commit -m "..."
 | `quality-gate baseline [--force]` | Snapshot metrics into `.quality-gate-baseline.json` |
 | `quality-gate check --staged [--mode pre-commit] [--format json\|human]` | Run the gate on staged files |
 | `quality-gate check --file <path>` | Run the gate on one file (fast, no coverage/duplication) |
+| `quality-gate check --base <ref>` | CI mode: run the gate on files changed vs. a base ref |
 | `quality-gate audit [path] [--top N]` | List the worst files by complexity |
 | `quality-gate refresh-baseline --file <path>` | Re-baseline one file after a deliberate refactor |
 | `quality-gate install-hooks` | Install the git pre-commit + Claude Code hooks |
@@ -68,10 +138,12 @@ Slash commands (`/quality-check`, `/quality-baseline`) and the `/quality-audit` 
 
 Presets: `@quality-gate/nextjs`, `@quality-gate/monorepo-turborepo`, `@quality-gate/node-cli`.
 
-## Bypasses
+## Bypasses (quality analyzers only)
 
-- `QUALITY_GATE_BYPASS=1 git commit ...` — skip the gate for one command/session.
-- `[skip-quality]` in the commit message — skipped by the Claude Code hook.
+- `QUALITY_GATE_BYPASS=1 git commit ...` — skip the quality analyzers for one command/session.
+- `[skip-quality]` in the commit message — quality analyzers skipped by the Claude Code hook.
+
+Both bypasses keep the security analyzers running (see "Security tier"). There is no flag that skips a secret scan.
 
 ## Troubleshooting
 

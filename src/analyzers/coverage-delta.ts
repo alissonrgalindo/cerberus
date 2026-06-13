@@ -78,6 +78,30 @@ export function compareCoverage(
   return out;
 }
 
+/**
+ * Collects per-file coverage for the baseline snapshot. Best-effort:
+ *   1. an existing coverage/coverage-summary.json is reused;
+ *   2. otherwise, when vitest is detected, a full coverage run is attempted;
+ *   3. anything failing → null (baseline stores 0 and the delta check no-ops).
+ */
+export function collectCoverageForBaseline(cwd: string, timeoutMs: number): Map<string, number> | null {
+  const summary = join(cwd, 'coverage', 'coverage-summary.json');
+  try {
+    if (existsSync(summary)) return parseCoverageSummary(summary, cwd);
+    if (!hasVitest(cwd)) return null;
+    execaSync('npx', ['vitest', 'run', '--coverage', '--coverage.reporter=json-summary'], {
+      cwd,
+      reject: false,
+      timeout: timeoutMs,
+      stdio: 'ignore',
+    });
+    if (!existsSync(summary)) return null;
+    return parseCoverageSummary(summary, cwd);
+  } catch {
+    return null;
+  }
+}
+
 export type CoverageOutcome = { violations: SetViolation[]; skipped: boolean; reason?: string };
 
 /**

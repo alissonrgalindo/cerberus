@@ -15,5 +15,12 @@ export function loadBaseline(cwd: string): Baseline | null {
 }
 
 export function saveBaseline(cwd: string, baseline: Baseline): void {
-  writeFileSync(join(cwd, BASELINE_FILE), `${JSON.stringify(baseline, null, 2)}\n`);
+  // Stable key order keeps the file diff-friendly and minimizes merge
+  // conflicts when several branches re-baseline different files.
+  const sortedFiles: Baseline['files'] = {};
+  for (const key of Object.keys(baseline.files).sort()) {
+    sortedFiles[key] = baseline.files[key];
+  }
+  const sorted: Baseline = { ...baseline, files: sortedFiles };
+  writeFileSync(join(cwd, BASELINE_FILE), `${JSON.stringify(sorted, null, 2)}\n`);
 }

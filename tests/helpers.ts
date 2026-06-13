@@ -63,6 +63,8 @@ export function baselineWith(partial: {
   cognitivePerFunction?: Record<string, number>;
   cyclomaticPerFunction?: Record<string, number>;
   typeSafety?: Partial<FileBaseline['metrics']['typeSafety']>;
+  functionLengthPerFunction?: Record<string, number>;
+  parameterCountPerFunction?: Record<string, number>;
 }): FileBaseline {
   return {
     fileHash: 'test',
@@ -82,6 +84,14 @@ export function baselineWith(partial: {
         ...partial.typeSafety,
       },
       coverage: { percent: 0 },
+      functionLength: {
+        max: 0,
+        perFunction: partial.functionLengthPerFunction ?? {},
+      },
+      parameterCount: {
+        max: 0,
+        perFunction: partial.parameterCountPerFunction ?? {},
+      },
     },
   };
 }

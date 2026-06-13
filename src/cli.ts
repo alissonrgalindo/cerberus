@@ -4,26 +4,46 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import chalk from 'chalk';
 import { measureCognitive } from './analyzers/cognitive-complexity.js';
-import { analyzeCoverage } from './analyzers/coverage-delta.js';
+import { analyzeCoverage, collectCoverageForBaseline } from './analyzers/coverage-delta.js';
 import { measureCyclomatic } from './analyzers/cyclomatic-complexity.js';
 import { analyzeDuplication } from './analyzers/duplication.js';
+import { analyzeMigrationSafety } from './analyzers/migration-safety.js';
+import { analyzeNewDependency } from './analyzers/new-dependency.js';
+import { analyzeSecretInDiff } from './analyzers/secret-in-diff.js';
 import { measureTypeSafety } from './analyzers/type-safety.js';
 import { hashFileSet, incrementAttempt } from './attempts.js';
 import { BASELINE_FILE, loadBaseline, saveBaseline } from './baseline.js';
 import { isGitCommit } from './commit-detect.js';
 import { CONFIG_FILE, loadConfig } from './config.js';
-import { analyzeFile, computeFileBaseline, hashContent, type FileReport } from './engine.js';
+import { listDrift, type DriftEntry } from './drift.js';
+import { analyzeFile, analyzePythonFile, computeFileBaseline, type FileReport } from './engine.js';
 import { toPosix, walkTsFiles } from './files.js';
-import { getFileContent, getStagedFiles } from './git-diff.js';
+import { getChangedFiles, getFileContent, getStagedFiles } from './git-diff.js';
 import { applyTodoInjection, stageFiles } from './injector.js';
-import { installGitHook, registerClaudeHook } from './install-hooks.js';
-import { reportHuman, reportJson, type RunReport } from './reporter.js';
-import type { Baseline, SetViolation } from './types.js';
+import {
+  detectInstalledHook,
+  gitHooksDir,
+  installGitHook,
+  registerClaudeHook,
+} from './install-hooks.js';
+import { reportGithub, reportHuman, reportJson, type RunReport } from './reporter.js';
+import {
+  isSecurityViolation,
+  SECURITY_ANALYZERS,
+  type Baseline,
+  type Config,
+  type SetViolation,
+} from './types.js';
+
+/** Stable schema version for every --format json output. Bump on breaking changes. */
+const JSON_SCHEMA_VERSION = 1 as const;
 
 type CheckOutcome = { report: RunReport; exitCode: number };
 
 const TS_EXT = /\.(ts|tsx|mts|cts)$/;
 const DTS_EXT = /\.d\.ts$/;
+const SQL_EXT = /\.sql$/i;
+const PY_EXT = /\.py$/;
 
 function relKey(cwd: string, absPath: string): string {
   return toPosix(relative(cwd, absPath));
@@ -33,8 +53,20 @@ function toAbs(cwd: string, p: string): string {
   return isAbsolute(p) ? p : resolve(cwd, p);
 }
 
-function isAnalyzable(absPath: string): boolean {
+function isTsAnalyzable(absPath: string): boolean {
   return TS_EXT.test(absPath) && !DTS_EXT.test(absPath);
+}
+
+function isMigrationSql(absPath: string): boolean {
+  return SQL_EXT.test(absPath);
+}
+
+function isPyAnalyzable(absPath: string): boolean {
+  return PY_EXT.test(absPath);
+}
+
+function isAnalyzable(absPath: string): boolean {
+  return isTsAnalyzable(absPath) || isMigrationSql(absPath) || isPyAnalyzable(absPath);
 }
 
 function bypassActive(): boolean {
@@ -46,45 +78,90 @@ function bypassActive(): boolean {
  * Runs analyzers over the given files and, in pre-commit mode, applies the
  * anti-doom-loop: after maxRefactorAttempts the gate lets the commit through,
  * injecting `// TODO: quality-gate(...)` flags and re-staging the files.
+ *
+ * Security-tier analyzers are exempt from every escape hatch: the doom-loop
+ * never passes them through, and `securityOnly` mode (used when a bypass is
+ * active) still runs them.
  */
-async function performCheck(opts: { cwd: string; files: string[]; mode?: string }): Promise<CheckOutcome> {
+async function performCheck(opts: {
+  cwd: string;
+  files: string[];
+  mode?: string;
+  securityOnly?: boolean;
+}): Promise<CheckOutcome> {
   const { cwd } = opts;
-  const config = loadConfig(cwd);
+  const fullConfig = loadConfig(cwd);
+  // Security analyzers are ALWAYS enabled, regardless of what the config says.
+  // The config file lives in the repo, which means a blocked agent could edit
+  // it to disable secret scanning — so it doesn't get a vote on security.
+  const enabledWithSecurity = [
+    ...new Set([...fullConfig.preCommit.enabled, ...SECURITY_ANALYZERS]),
+  ] as Config['preCommit']['enabled'];
+  const config: Config = {
+    ...fullConfig,
+    preCommit: {
+      ...fullConfig.preCommit,
+      enabled: opts.securityOnly
+        ? enabledWithSecurity.filter((a) => SECURITY_ANALYZERS.has(a))
+        : enabledWithSecurity,
+    },
+  };
   const baseline = loadBaseline(cwd);
-  const files = opts.files.filter((f) => isAnalyzable(f) && existsSync(f));
+  const allStaged = opts.files.filter((f) => existsSync(f));
+  const files = allStaged.filter(isAnalyzable);
 
   const reports: FileReport[] = [];
-  for (const abs of files) {
+  const tsFiles = files.filter(isTsAnalyzable);
+  const sqlFiles = files.filter(isMigrationSql);
+  const pyFiles = files.filter(isPyAnalyzable);
+  for (const abs of tsFiles) {
     const rel = relKey(cwd, abs);
     const report = await analyzeFile(rel, getFileContent(abs), config, baseline?.files[rel]);
     reports.push(report);
   }
+  for (const abs of pyFiles) {
+    const rel = relKey(cwd, abs);
+    reports.push(await analyzePythonFile(rel, getFileContent(abs), config));
+  }
 
-  // Set-level analyzers (coverage, duplication) are expensive and only run when
-  // enforcing a commit. Their violations are merged into the per-file reports.
+  // Set-level analyzers (coverage, duplication, migration-safety) run regardless
+  // of mode when there are matching files — they're cheap when there's nothing
+  // to look at. Their violations are merged into the per-file reports.
   const notes: string[] = [];
-  if (opts.mode === 'pre-commit') {
-    const enabled = new Set(config.preCommit.enabled);
-    const setViolations: SetViolation[] = [];
+  const enabled = new Set(config.preCommit.enabled);
+  const setViolations: SetViolation[] = [];
 
+  if (opts.mode === 'pre-commit') {
     if (enabled.has('duplication')) {
-      setViolations.push(...analyzeDuplication(files, cwd, config));
+      setViolations.push(...analyzeDuplication(tsFiles, cwd, config));
     }
     if (enabled.has('coverage')) {
-      const cov = await analyzeCoverage(files.map((f) => relKey(cwd, f)), cwd, baseline, config);
+      const cov = await analyzeCoverage(tsFiles.map((f) => relKey(cwd, f)), cwd, baseline, config);
       if (cov.skipped && cov.reason) notes.push(`coverage: ${cov.reason}`);
       setViolations.push(...cov.violations);
     }
+  }
+  if (enabled.has('migration-safety') && sqlFiles.length > 0) {
+    setViolations.push(...analyzeMigrationSafety(sqlFiles, cwd));
+  }
+  // secret-in-diff scans every staged file regardless of extension (env files,
+  // configs, fixtures, markdown — secrets leak through all of them).
+  if (enabled.has('secret-in-diff') && allStaged.length > 0) {
+    setViolations.push(...analyzeSecretInDiff(allStaged, cwd));
+  }
+  // new-dependency audits staged package.json manifests for slopsquatting.
+  if (enabled.has('new-dependency') && allStaged.length > 0) {
+    setViolations.push(...analyzeNewDependency(allStaged, cwd));
+  }
 
-    for (const sv of setViolations) {
-      let report = reports.find((r) => r.file === sv.file);
-      if (!report) {
-        report = { file: sv.file, passed: true, violations: [], metrics: {} };
-        reports.push(report);
-      }
-      report.violations.push(sv.violation);
-      report.passed = false;
+  for (const sv of setViolations) {
+    let report = reports.find((r) => r.file === sv.file);
+    if (!report) {
+      report = { file: sv.file, passed: true, violations: [], metrics: {} };
+      reports.push(report);
     }
+    report.violations.push(sv.violation);
+    report.passed = false;
   }
 
   const anyViolation = reports.some((r) => !r.passed);
@@ -96,12 +173,18 @@ async function performCheck(opts: { cwd: string; files: string[]; mode?: string 
     const max = config.maxRefactorAttempts;
     const { count } = incrementAttempt(cwd, hashFileSet(files.map((f) => relKey(cwd, f))));
     attempt = `${count}/${max}`;
-    if (count > max) {
+    const hasSecurityViolation = reports.some((r) => r.violations.some(isSecurityViolation));
+    if (count > max && !hasSecurityViolation) {
+      // Anti-doom-loop applies to QUALITY debt only. Security violations
+      // (secrets, injection sinks, destructive migrations, slopsquatting)
+      // never pass with a TODO — a leaked key with a TODO is still leaked.
       status = 'PASS_WITH_TODO';
       exitCode = 0;
       const failing = reports.filter((r) => !r.passed);
       for (const r of failing) applyTodoInjection(cwd, r, attempt);
       stageFiles(cwd, failing.map((r) => r.file));
+    } else if (count > max && hasSecurityViolation) {
+      notes.push('security violations present — anti-doom-loop pass-through disabled');
     }
   }
 
@@ -114,21 +197,30 @@ async function performCheck(opts: { cwd: string; files: string[]; mode?: string 
 async function runCheck(args: {
   file?: string;
   staged?: boolean;
+  base?: string;
   mode?: string;
   format?: string;
 }): Promise<void> {
   const cwd = process.cwd();
-  if (bypassActive()) {
-    process.stderr.write(chalk.dim('quality-gate: bypassed (QUALITY_GATE_BYPASS=1)\n'));
-    process.exit(0);
+
+  // QUALITY_GATE_BYPASS downgrades the gate to security-only instead of
+  // disabling it: quality debt is bypassable, leaked secrets are not.
+  const securityOnly = bypassActive();
+  if (securityOnly) {
+    process.stderr.write(
+      chalk.dim('quality-gate: QUALITY_GATE_BYPASS=1 — quality checks skipped, security checks still enforced\n'),
+    );
   }
 
   const files = args.file
     ? [toAbs(cwd, args.file)]
-    : getStagedFiles(cwd).map((f) => toAbs(cwd, f));
+    : args.base
+      ? getChangedFiles(cwd, args.base).map((f) => toAbs(cwd, f))
+      : getStagedFiles(cwd).map((f) => toAbs(cwd, f));
 
-  const { report, exitCode } = await performCheck({ cwd, files, mode: args.mode });
+  const { report, exitCode } = await performCheck({ cwd, files, mode: args.mode, securityOnly });
   if (args.format === 'json') reportJson(report);
+  else if (args.format === 'github') reportGithub(report);
   else reportHuman(report);
   process.exit(exitCode);
 }
@@ -145,27 +237,111 @@ async function runClaudeHook(): Promise<void> {
   const command = payload.tool_input?.command ?? '';
   const cwd = payload.cwd ?? process.cwd();
   if (payload.tool_name !== 'Bash' || !isGitCommit(command)) process.exit(0);
-  if (/\[skip-quality\]/.test(command) || bypassActive()) process.exit(0);
+
+  // A bypass ([skip-quality] in the message, or QUALITY_GATE_BYPASS anywhere —
+  // including inline in the command the agent wrote) only skips the QUALITY
+  // analyzers. Security analyzers always run: an agent must never be able to
+  // talk itself past a leaked secret or an injection sink.
+  const securityOnly =
+    /\[skip-quality\]/.test(command) ||
+    /\bQUALITY_GATE_BYPASS=1\b/.test(command) ||
+    bypassActive();
 
   const files = getStagedFiles(cwd).map((f) => toAbs(cwd, f));
   if (files.length === 0) process.exit(0);
 
-  const { report, exitCode } = await performCheck({ cwd, files, mode: 'pre-commit' });
+  const { report, exitCode } = await performCheck({ cwd, files, mode: 'pre-commit', securityOnly });
   if (exitCode === 0) process.exit(0);
 
   const failing = report.files.filter((f) => !f.passed);
+  const hasSecurity = failing.some((f) => f.violations.some(isSecurityViolation));
   const lines = failing.flatMap((f) =>
-    f.violations.map((v) => `  ${f.file} — ${v.analyzer} ${v.location}: ${v.current} > ${v.threshold}`),
+    f.violations.map(
+      (v) =>
+        `  ${f.file} — ${v.analyzer} ${v.location}: ${v.current} > ${v.threshold}\n    fix: ${v.suggestion}`,
+    ),
   );
+  // Deliberately NO bypass instructions here: this message is read by the
+  // agent, and telling a blocked agent how to disable the gate defeats it.
   process.stderr.write(
     `quality-gate blocked this commit (${failing.length} file(s)):\n${lines.join('\n')}\n` +
-      `Refactor and retry, or set QUALITY_GATE_BYPASS=1 / add [skip-quality] to the message.\n`,
+      (hasSecurity
+        ? 'Security violations must be fixed — they cannot be bypassed or deferred.\n'
+        : 'Fix the violations above and retry the commit.\n'),
   );
   process.exit(2); // block the Bash tool call
 }
 
-function runInstallHooks(): void {
+/**
+ * Claude Code PostToolUse(Edit|Write|MultiEdit) hook: runs the gate on the
+ * file the agent just edited and feeds violations straight back (exit 2 →
+ * stderr is shown to the agent). Fixing at edit time costs one tool call;
+ * discovering at commit time costs a doom-loop attempt.
+ */
+async function runClaudePostEditHook(): Promise<void> {
+  let payload: {
+    tool_name?: string;
+    tool_input?: { file_path?: string };
+    cwd?: string;
+  };
+  try {
+    payload = JSON.parse(readFileSync(0, 'utf8'));
+  } catch {
+    process.exit(0);
+  }
+
+  const toolName = payload.tool_name ?? '';
+  if (!['Edit', 'Write', 'MultiEdit'].includes(toolName)) process.exit(0);
+  const filePath = payload.tool_input?.file_path;
+  if (!filePath) process.exit(0);
+
+  const cwd = payload.cwd ?? process.cwd();
+  const abs = toAbs(cwd, filePath);
+  if (!existsSync(abs)) process.exit(0);
+
+  // Don't pre-filter by extension: secret-in-diff applies to any file the
+  // agent writes (.env, configs, fixtures). performCheck routes internally.
+  const { report, exitCode } = await performCheck({ cwd, files: [abs], mode: 'post-edit' });
+  if (exitCode === 0) process.exit(0);
+
+  const failing = report.files.filter((f) => !f.passed);
+  const lines = failing.flatMap((f) =>
+    f.violations.map((v) => `  ${v.analyzer} ${v.location}: ${v.suggestion}`),
+  );
+  process.stderr.write(
+    `quality-gate found issues in the file you just edited (fix them now — the commit will be blocked otherwise):\n${lines.join('\n')}\n`,
+  );
+  process.exit(2); // feed stderr back to the agent
+}
+
+function runInstallHooks(args: { dryRun?: boolean }): void {
   const cwd = process.cwd();
+  const existing = detectInstalledHook(cwd);
+
+  // Already wired (Husky or git): no-op. Don't mutate, don't confuse the agent.
+  if (existing.kind !== 'none' && existing.hasMarker) {
+    process.stdout.write(
+      chalk.green(`✓ already installed (${existing.kind}: ${existing.path})\n`),
+    );
+    process.stdout.write(chalk.dim('Use --force to re-install (not implemented yet).\n'));
+    return;
+  }
+
+  if (args.dryRun) {
+    let plan: string;
+    if (existing.kind === 'none') {
+      const hooksDir = gitHooksDir(cwd);
+      plan = hooksDir
+        ? `would write fresh hook at ${hooksDir}/pre-commit`
+        : 'not a git repository — would refuse to install (run "git init" or use Husky)';
+    } else {
+      plan = `would ${existing.kind === 'husky' ? 'append to' : 'wrap'} ${existing.path}`;
+    }
+    process.stdout.write(chalk.cyan(`(dry-run) ${plan}\n`));
+    process.stdout.write(chalk.dim('Run without --dry-run to apply.\n'));
+    return;
+  }
+
   const { hookPath, wrapped, husky } = installGitHook(cwd);
   const settingsPath = registerClaudeHook(cwd);
   const suffix = husky ? ' (appended to husky hook)' : wrapped ? ' (wrapped existing hook)' : '';
@@ -187,32 +363,81 @@ function runBaseline(args: { force?: boolean }): void {
     const rel = relKey(cwd, abs);
     baseline.files[rel] = computeFileBaseline(rel, readFileSync(abs, 'utf8'));
   }
+  // Fill real coverage percentages so the coverage-delta analyzer has a floor
+  // to compare against (best-effort; 0 means "no data, never flag").
+  const coverage = collectCoverageForBaseline(cwd, config.preCommit.timeoutMs);
+  if (coverage) {
+    let covered = 0;
+    for (const [rel, pct] of coverage) {
+      if (baseline.files[rel]) {
+        baseline.files[rel].metrics.coverage.percent = pct;
+        covered += 1;
+      }
+    }
+    process.stdout.write(chalk.dim(`coverage baseline: ${covered} file(s)\n`));
+  } else {
+    process.stdout.write(chalk.dim('coverage baseline: skipped (no vitest/coverage data)\n'));
+  }
   saveBaseline(cwd, baseline);
   process.stdout.write(
     chalk.green(`✓ baseline: ${Object.keys(baseline.files).length} files → ${BASELINE_FILE}\n`),
   );
 }
 
-function runRefreshBaseline(args: { file: string }): void {
+function runRefreshBaseline(args: {
+  file?: string[];
+  allDrifted?: boolean;
+  stdin?: boolean;
+}): void {
   const cwd = process.cwd();
-  const abs = toAbs(cwd, args.file);
-  if (!existsSync(abs)) {
-    process.stderr.write(chalk.red(`File not found: ${args.file}\n`));
+
+  let targets: string[] = [];
+  if (args.allDrifted) {
+    targets = listDrift(cwd).map((d) => d.file);
+    if (targets.length === 0) {
+      process.stdout.write(chalk.green('✓ no drift — nothing to refresh\n'));
+      return;
+    }
+  } else if (args.stdin) {
+    targets = readFileSync(0, 'utf8')
+      .split('\n')
+      .map((s) => s.trim())
+      .filter(Boolean);
+  } else if (args.file && args.file.length) {
+    targets = args.file;
+  } else {
+    process.stderr.write(
+      chalk.red('Provide --file <path> (repeatable), --all-drifted, or --stdin\n'),
+    );
     process.exit(1);
   }
+
   const baseline: Baseline = loadBaseline(cwd) ?? {
     version: 1,
     generatedAt: new Date().toISOString(),
     files: {},
   };
-  const rel = relKey(cwd, abs);
-  baseline.files[rel] = computeFileBaseline(rel, readFileSync(abs, 'utf8'));
-  baseline.generatedAt = new Date().toISOString();
-  saveBaseline(cwd, baseline);
-  process.stdout.write(chalk.green(`✓ re-baselined ${rel}\n`));
+
+  let updated = 0;
+  for (const p of targets) {
+    const abs = toAbs(cwd, p);
+    if (!existsSync(abs)) {
+      process.stderr.write(chalk.yellow(`skip (not found): ${p}\n`));
+      continue;
+    }
+    const rel = relKey(cwd, abs);
+    baseline.files[rel] = computeFileBaseline(rel, readFileSync(abs, 'utf8'));
+    process.stdout.write(chalk.green(`✓ re-baselined ${rel}\n`));
+    updated += 1;
+  }
+  if (updated > 0) {
+    baseline.generatedAt = new Date().toISOString();
+    saveBaseline(cwd, baseline);
+  }
+  process.stdout.write(chalk.dim(`${updated} file(s) updated\n`));
 }
 
-function runAudit(args: { path?: string; top?: number }): void {
+function runAudit(args: { path?: string; top?: number; format?: string }): void {
   const cwd = process.cwd();
   const config = loadConfig(cwd);
   const root = args.path ? toAbs(cwd, args.path) : cwd;
@@ -224,16 +449,38 @@ function runAudit(args: { path?: string; top?: number }): void {
     const cognitive = measureCognitive(rel, content).reduce((m, s) => Math.max(m, s.score), 0);
     const cyclomatic = measureCyclomatic(rel, content).reduce((m, s) => Math.max(m, s.score), 0);
     const ts = measureTypeSafety(rel, content);
-    return { file: rel, cognitive, cyclomatic, any: ts.anyCount, worst: Math.max(cognitive, cyclomatic) };
+    return {
+      file: rel,
+      cognitive,
+      cyclomatic,
+      any: ts.anyCount,
+      worst: Math.max(cognitive, cyclomatic),
+    };
   });
 
   rows.sort((a, b) => b.worst - a.worst);
   const shown = rows.slice(0, top);
 
-  process.stdout.write(chalk.bold(`\nTop ${shown.length} files by complexity (of ${rows.length} scanned)\n\n`));
+  if (args.format === 'json') {
+    process.stdout.write(
+      `${JSON.stringify(
+        {
+          schemaVersion: JSON_SCHEMA_VERSION,
+          scanned: rows.length,
+          top: shown.length,
+          rows: shown,
+        },
+        null,
+        2,
+      )}\n`,
+    );
+    return;
+  }
+
   process.stdout.write(
-    chalk.dim('  cog  cyc  any  file\n'),
+    chalk.bold(`\nTop ${shown.length} files by complexity (of ${rows.length} scanned)\n\n`),
   );
+  process.stdout.write(chalk.dim('  cog  cyc  any  file\n'));
   for (const r of shown) {
     process.stdout.write(
       `  ${String(r.cognitive).padStart(3)}  ${String(r.cyclomatic).padStart(3)}  ${String(r.any).padStart(3)}  ${r.file}\n`,
@@ -242,41 +489,242 @@ function runAudit(args: { path?: string; top?: number }): void {
   process.stdout.write('\n');
 }
 
-function runDoctor(): void {
+function runDoctor(args: { format?: string; verbose?: boolean }): void {
   const cwd = process.cwd();
+  const verbose = args.verbose ?? false;
+  const json = args.format === 'json';
+
+  // Collect state first so JSON output can emit it whole.
+  const hasConfig = existsSync(resolve(cwd, CONFIG_FILE));
+  const baseline = loadBaseline(cwd);
+  const drifted: DriftEntry[] = baseline ? listDrift(cwd) : [];
+  const hook = detectInstalledHook(cwd);
+  const bypass = bypassActive();
+
   let ok = true;
+  const lines: Array<{ good: boolean; msg: string }> = [];
   const line = (good: boolean, msg: string): void => {
-    process.stdout.write(`  ${good ? chalk.green('✓') : chalk.yellow('•')} ${msg}\n`);
+    lines.push({ good, msg });
     if (!good) ok = false;
   };
 
-  process.stdout.write(chalk.bold('\nquality-gate doctor\n\n'));
-
-  const hasConfig = existsSync(resolve(cwd, CONFIG_FILE));
   line(hasConfig, hasConfig ? `${CONFIG_FILE} found` : `${CONFIG_FILE} missing (using defaults)`);
 
-  const baseline = loadBaseline(cwd);
   if (!baseline) {
     line(false, `${BASELINE_FILE} missing — run "quality-gate baseline"`);
   } else {
     const total = Object.keys(baseline.files).length;
-    let stale = 0;
-    for (const [rel, fb] of Object.entries(baseline.files)) {
-      const abs = resolve(cwd, rel);
-      if (existsSync(abs) && hashContent(readFileSync(abs, 'utf8')) !== fb.fileHash) stale += 1;
-    }
     line(true, `${BASELINE_FILE}: ${total} files`);
-    line(stale === 0, stale === 0 ? 'baseline up to date' : `${stale} file(s) drifted from baseline (refresh-baseline)`);
+    if (drifted.length === 0) {
+      line(true, 'baseline up to date');
+    } else {
+      line(
+        false,
+        `${drifted.length} file(s) drifted from baseline — see "quality-gate drift"`,
+      );
+    }
   }
 
-  const gitHook = resolve(cwd, '.git', 'hooks', 'pre-commit');
-  const hookInstalled = existsSync(gitHook) && readFileSync(gitHook, 'utf8').includes('quality-gate-hook');
-  line(hookInstalled, hookInstalled ? 'git pre-commit hook installed' : 'git pre-commit hook missing — run "quality-gate install-hooks"');
+  if (hook.kind === 'none') {
+    line(false, 'git pre-commit hook missing — run "quality-gate install-hooks"');
+  } else if (!hook.hasMarker) {
+    line(
+      false,
+      `pre-commit hook present (${hook.kind}: ${hook.path}) but quality-gate not wired — run "quality-gate install-hooks"`,
+    );
+  } else {
+    line(true, `pre-commit hook installed (${hook.kind}: ${hook.path})`);
+  }
 
-  if (bypassActive()) line(false, 'QUALITY_GATE_BYPASS=1 is active — gate disabled this session');
+  if (bypass) line(false, 'QUALITY_GATE_BYPASS=1 is active — gate disabled this session');
 
-  process.stdout.write(`\n${ok ? chalk.green('All good.') : chalk.yellow('Some checks need attention.')}\n\n`);
+  if (json) {
+    process.stdout.write(
+      `${JSON.stringify(
+        {
+          schemaVersion: JSON_SCHEMA_VERSION,
+          ok,
+          config: { found: hasConfig, path: CONFIG_FILE },
+          baseline: baseline
+            ? { found: true, total: Object.keys(baseline.files).length, drifted: drifted.length }
+            : { found: false, total: 0, drifted: 0 },
+          drifted: drifted.map((d) => ({
+            file: d.file,
+            direction: d.direction,
+            deltas: d.deltas,
+          })),
+          hook,
+          bypass,
+        },
+        null,
+        2,
+      )}\n`,
+    );
+    process.exit(0);
+  }
+
+  process.stdout.write(chalk.bold('\nquality-gate doctor\n\n'));
+  for (const l of lines) {
+    process.stdout.write(`  ${l.good ? chalk.green('✓') : chalk.yellow('•')} ${l.msg}\n`);
+  }
+
+  if (drifted.length > 0) {
+    const limit = verbose ? drifted.length : Math.min(20, drifted.length);
+    process.stdout.write('\n');
+    for (const d of drifted.slice(0, limit)) {
+      const arrow =
+        d.direction === 'degraded' ? chalk.yellow('↑') :
+        d.direction === 'improved' ? chalk.green('↓') : chalk.dim('·');
+      process.stdout.write(`      ${arrow} ${d.file}\n`);
+    }
+    if (drifted.length > limit) {
+      process.stdout.write(
+        chalk.dim(`      … and ${drifted.length - limit} more (use --verbose)\n`),
+      );
+    }
+  }
+
+  process.stdout.write(
+    `\n${ok ? chalk.green('All good.') : chalk.yellow('Some checks need attention.')}\n\n`,
+  );
   process.exit(0);
+}
+
+function runDrift(args: { format?: string }): void {
+  const cwd = process.cwd();
+  const drifted = listDrift(cwd);
+
+  if (args.format === 'json') {
+    process.stdout.write(
+      `${JSON.stringify(
+        {
+          schemaVersion: JSON_SCHEMA_VERSION,
+          count: drifted.length,
+          drifted: drifted.map((d) => ({
+            file: d.file,
+            direction: d.direction,
+            deltas: d.deltas,
+            baseline: {
+              cognitiveMax: d.baseline.metrics.cognitiveComplexity.max,
+              cyclomaticMax: d.baseline.metrics.cyclomaticComplexity.max,
+              anyCount: d.baseline.metrics.typeSafety.anyCount,
+            },
+            current: {
+              cognitiveMax: d.current.metrics.cognitiveComplexity.max,
+              cyclomaticMax: d.current.metrics.cyclomaticComplexity.max,
+              anyCount: d.current.metrics.typeSafety.anyCount,
+            },
+          })),
+        },
+        null,
+        2,
+      )}\n`,
+    );
+    return;
+  }
+
+  if (drifted.length === 0) {
+    process.stdout.write(chalk.green('✓ no drift — baseline matches working tree\n'));
+    return;
+  }
+
+  const cell = (curr: number, delta: number): string => {
+    const d = delta === 0 ? ' 0' : delta > 0 ? `+${delta}` : `${delta}`;
+    return `${String(curr).padStart(3)} (${d.padStart(3)})`;
+  };
+
+  process.stdout.write(chalk.bold(`\n${drifted.length} file(s) drifted\n\n`));
+  process.stdout.write(chalk.dim('  dir   cog (Δ)    cyc (Δ)    any (Δ)   file\n'));
+  for (const d of drifted) {
+    const arrow =
+      d.direction === 'degraded' ? chalk.yellow('↑') :
+      d.direction === 'improved' ? chalk.green('↓') : chalk.dim('·');
+    process.stdout.write(
+      `  ${arrow}   ${cell(d.current.metrics.cognitiveComplexity.max, d.deltas.cognitiveMax)}  ` +
+        `${cell(d.current.metrics.cyclomaticComplexity.max, d.deltas.cyclomaticMax)}  ` +
+        `${cell(d.current.metrics.typeSafety.anyCount, d.deltas.anyCount)}  ${d.file}\n`,
+    );
+  }
+  process.stdout.write(
+    '\n' + chalk.dim('Refresh: quality-gate refresh-baseline --all-drifted\n'),
+  );
+}
+
+function runDiff(args: { format?: string }): void {
+  const cwd = process.cwd();
+  const baseline = loadBaseline(cwd);
+  if (!baseline) {
+    process.stderr.write(chalk.red('No baseline — run "quality-gate baseline" first.\n'));
+    process.exit(1);
+  }
+  const drift = listDrift(cwd);
+
+  const detailed = drift.map((d) => {
+    const cogBase = baseline.files[d.file].metrics.cognitiveComplexity.perFunction;
+    const cogCurr = d.current.metrics.cognitiveComplexity.perFunction;
+    const cycBase = baseline.files[d.file].metrics.cyclomaticComplexity.perFunction;
+    const cycCurr = d.current.metrics.cyclomaticComplexity.perFunction;
+    const fnNames = new Set([
+      ...Object.keys(cogBase),
+      ...Object.keys(cogCurr),
+      ...Object.keys(cycBase),
+      ...Object.keys(cycCurr),
+    ]);
+    const functions = [...fnNames]
+      .map((name) => ({
+        name,
+        cognitive: {
+          baseline: cogBase[name] ?? 0,
+          current: cogCurr[name] ?? 0,
+          delta: (cogCurr[name] ?? 0) - (cogBase[name] ?? 0),
+        },
+        cyclomatic: {
+          baseline: cycBase[name] ?? 0,
+          current: cycCurr[name] ?? 0,
+          delta: (cycCurr[name] ?? 0) - (cycBase[name] ?? 0),
+        },
+      }))
+      .filter((f) => f.cognitive.delta !== 0 || f.cyclomatic.delta !== 0)
+      .sort((a, b) => Math.abs(b.cognitive.delta) - Math.abs(a.cognitive.delta));
+    return { file: d.file, direction: d.direction, functions };
+  });
+
+  if (args.format === 'json') {
+    process.stdout.write(
+      `${JSON.stringify(
+        { schemaVersion: JSON_SCHEMA_VERSION, files: detailed },
+        null,
+        2,
+      )}\n`,
+    );
+    return;
+  }
+
+  if (detailed.length === 0) {
+    process.stdout.write(chalk.green('✓ no diff — working tree matches baseline\n'));
+    return;
+  }
+
+  for (const f of detailed) {
+    process.stdout.write('\n' + chalk.underline(f.file) + chalk.dim(`  (${f.direction})\n`));
+    if (f.functions.length === 0) {
+      process.stdout.write(chalk.dim('  (content changed but no per-function metric delta)\n'));
+      continue;
+    }
+    for (const fn of f.functions) {
+      const cogD = fn.cognitive.delta;
+      const cycD = fn.cyclomatic.delta;
+      const tag = (label: string, base: number, curr: number, d: number): string => {
+        if (d === 0) return '';
+        const sign = d > 0 ? chalk.yellow(`+${d}`) : chalk.green(`${d}`);
+        return `${chalk.dim(label)}: ${base}→${curr} (${sign})  `;
+      };
+      process.stdout.write(
+        `  ${chalk.cyan(fn.name)}  ${tag('cog', fn.cognitive.baseline, fn.cognitive.current, cogD)}${tag('cyc', fn.cyclomatic.baseline, fn.cyclomatic.current, cycD)}\n`,
+      );
+    }
+  }
+  process.stdout.write('\n');
 }
 
 await yargs(hideBin(process.argv))
@@ -288,10 +736,19 @@ await yargs(hideBin(process.argv))
       y
         .option('file', { type: 'string', describe: 'Analyze a single file' })
         .option('staged', { type: 'boolean', describe: 'Analyze staged files' })
-        .option('mode', { choices: ['pre-commit', 'post-edit'] as const, describe: 'Enforcement mode (pre-commit counts attempts)' })
-        .option('format', { choices: ['json', 'human'] as const, default: 'human' })
+        .option('base', {
+          type: 'string',
+          describe: 'CI mode: analyze files changed vs. a base ref (e.g. origin/main)',
+        })
+        .option('mode', {
+          choices: ['pre-commit', 'post-edit'] as const,
+          describe: 'Enforcement mode (pre-commit counts attempts)',
+        })
+        .option('format', { choices: ['json', 'human', 'github'] as const, default: 'human' })
         .check((a) => {
-          if (!a.file && !a.staged) throw new Error('Provide --file <path> or --staged');
+          if (!a.file && !a.staged && !a.base) {
+            throw new Error('Provide --file <path>, --staged, or --base <ref>');
+          }
           return true;
         }),
     (a) => runCheck(a),
@@ -304,8 +761,22 @@ await yargs(hideBin(process.argv))
   )
   .command(
     'refresh-baseline',
-    'Recompute the baseline for a single file',
-    (y) => y.option('file', { type: 'string', demandOption: true, describe: 'File to re-baseline' }),
+    'Recompute the baseline for one or more files',
+    (y) =>
+      y
+        .option('file', {
+          type: 'string',
+          array: true,
+          describe: 'File(s) to re-baseline (repeatable)',
+        })
+        .option('all-drifted', {
+          type: 'boolean',
+          describe: 'Re-baseline every drifted file',
+        })
+        .option('stdin', {
+          type: 'boolean',
+          describe: 'Read newline-separated paths from stdin',
+        }),
     (a) => runRefreshBaseline(a),
   )
   .command(
@@ -314,17 +785,43 @@ await yargs(hideBin(process.argv))
     (y) =>
       y
         .positional('path', { type: 'string', describe: 'Directory to scan (default: cwd)' })
-        .option('top', { type: 'number', default: 10, describe: 'How many files to show' }),
+        .option('top', { type: 'number', default: 10, describe: 'How many files to show' })
+        .option('format', { choices: ['json', 'human'] as const, default: 'human' }),
     (a) => runAudit(a),
   )
-  .command('doctor', 'Diagnose config, baseline and hook state', {}, () => runDoctor())
+  .command(
+    'drift',
+    'List files whose content drifted from the baseline',
+    (y) => y.option('format', { choices: ['json', 'human'] as const, default: 'human' }),
+    (a) => runDrift(a),
+  )
+  .command(
+    'diff',
+    'Show per-function deltas between working tree and baseline',
+    (y) => y.option('format', { choices: ['json', 'human'] as const, default: 'human' }),
+    (a) => runDiff(a),
+  )
+  .command(
+    'doctor',
+    'Diagnose config, baseline and hook state',
+    (y) =>
+      y
+        .option('format', { choices: ['json', 'human'] as const, default: 'human' })
+        .option('verbose', { type: 'boolean', default: false, describe: 'Show all drifted files' }),
+    (a) => runDoctor(a),
+  )
   .command(
     'install-hooks',
     'Install the git pre-commit hook and register the Claude Code hook',
-    {},
-    () => runInstallHooks(),
+    (y) =>
+      y.option('dry-run', {
+        type: 'boolean',
+        describe: 'Print planned action and exit without writing',
+      }),
+    (a) => runInstallHooks(a),
   )
   .command('claude-hook', false, {}, () => runClaudeHook())
+  .command('claude-post-edit-hook', false, {}, () => runClaudePostEditHook())
   .demandCommand(1)
   .strict()
   .help()

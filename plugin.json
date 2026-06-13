@@ -11,6 +11,9 @@
   ],
   "commands": [
     "commands/quality-check.md",
-    "commands/quality-baseline.md"
+    "commands/quality-baseline.md",
+    "commands/quality-drift.md",
+    "commands/quality-diff.md",
+    "commands/quality-refresh-drift.md"
   ]
 }

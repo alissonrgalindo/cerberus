@@ -4,3 +4,9 @@ dist/
 coverage/
 *.log
 *.plugin
+*.tmp
+.qg-tmp*
+tsup.config.bundled_*.mjs
+.quality-gate-attempts.json
+PLAN.md
+ISSUE.md

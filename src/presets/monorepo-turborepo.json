@@ -5,7 +5,9 @@
     "newAnyCount": 0,
     "newTsIgnoreCount": 0,
     "coverageDelta": 0,
-    "duplicationLines": 30
+    "duplicationLines": 30,
+    "functionLength": 80,
+    "parameterCount": 4
   },
   "ignore": [
     "**/*.test.{ts,tsx}",
@@ -19,7 +21,25 @@
   ],
   "maxRefactorAttempts": 2,
   "preCommit": {
-    "enabled": ["cognitive", "cyclomatic", "type-safety", "coverage", "duplication"],
+    "enabled": [
+      "cognitive",
+      "cyclomatic",
+      "type-safety",
+      "coverage",
+      "duplication",
+      "transaction-required",
+      "revalidate-required",
+      "n-plus-one-query",
+      "migration-safety",
+      "silent-catch",
+      "hallucinated-import",
+      "shallow-module",
+      "function-length",
+      "parameter-count",
+      "secret-in-diff",
+      "injection",
+      "new-dependency"
+    ],
     "parallel": true,
     "timeoutMs": 30000
   },

@@ -2,12 +2,16 @@ import { execaSync } from 'execa';
 import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
-const MARKER = '# quality-gate-hook';
+export const MARKER = '# quality-gate-hook';
 
-/** Resolves the git hooks directory, honoring core.hooksPath. */
-function gitHooksDir(cwd: string): string {
-  const { stdout } = execaSync('git', ['rev-parse', '--git-path', 'hooks'], { cwd });
-  return resolve(cwd, stdout.trim());
+/** Resolves the git hooks directory, honoring core.hooksPath. Returns null outside a git repo. */
+export function gitHooksDir(cwd: string): string | null {
+  try {
+    const { stdout } = execaSync('git', ['rev-parse', '--git-path', 'hooks'], { cwd });
+    return resolve(cwd, stdout.trim());
+  } catch {
+    return null;
+  }
 }
 
 /** How the hooks should invoke this CLI — absolute path to the running bundle. */
@@ -18,8 +22,32 @@ export function cliInvocation(): string {
 export type GitHookResult = { hookPath: string; wrapped: boolean; husky: boolean };
 
 /** Husky-managed repos point core.hooksPath at .husky/_; we must edit .husky/pre-commit, not the shims. */
-function isHuskyRepo(cwd: string): boolean {
+export function isHuskyRepo(cwd: string): boolean {
   return existsSync(join(cwd, '.husky', '_')) || existsSync(join(cwd, '.husky', 'pre-commit'));
+}
+
+/**
+ * Single source of truth for "is the gate's pre-commit hook installed?".
+ * Honors core.hooksPath and Husky. Used by `doctor` (read-only) and `install-hooks`
+ * (to make the install a no-op when already wired).
+ */
+export type InstalledHook =
+  | { kind: 'husky'; path: string; hasMarker: boolean }
+  | { kind: 'git'; path: string; hasMarker: boolean }
+  | { kind: 'none' };
+
+export function detectInstalledHook(cwd: string): InstalledHook {
+  if (isHuskyRepo(cwd)) {
+    const path = join(cwd, '.husky', 'pre-commit');
+    const hasMarker = existsSync(path) && readFileSync(path, 'utf8').includes(MARKER);
+    return { kind: 'husky', path, hasMarker };
+  }
+  const hooksDir = gitHooksDir(cwd);
+  if (!hooksDir) return { kind: 'none' };
+  const path = join(hooksDir, 'pre-commit');
+  if (!existsSync(path)) return { kind: 'none' };
+  const hasMarker = readFileSync(path, 'utf8').includes(MARKER);
+  return { kind: 'git', path, hasMarker };
 }
 
 /**
@@ -46,7 +74,10 @@ function installHuskyHook(cwd: string): GitHookResult {
     }
   }
 
-  const block = `${MARKER}\n[ "$QUALITY_GATE_BYPASS" = "1" ] || ${cliInvocation()} check --staged --mode pre-commit --format human || exit 1\n`;
+  // No shell-level bypass: the CLI itself handles QUALITY_GATE_BYPASS by
+  // downgrading to security-only mode (a full skip here would also skip
+  // the secret scan).
+  const block = `${MARKER}\n${cliInvocation()} check --staged --mode pre-commit --format human || exit 1\n`;
   writeFileSync(hookPath, content + block, { mode: 0o755 });
   return { hookPath, wrapped: hadContent, husky: true };
 }
@@ -59,6 +90,9 @@ function installHuskyHook(cwd: string): GitHookResult {
 export function installGitHook(cwd: string): GitHookResult {
   if (isHuskyRepo(cwd)) return installHuskyHook(cwd);
   const hooksDir = gitHooksDir(cwd);
+  if (!hooksDir) {
+    throw new Error('Not a git repository — run "git init" first or install Husky.');
+  }
   mkdirSync(hooksDir, { recursive: true });
   const hookPath = join(hooksDir, 'pre-commit');
 
@@ -75,9 +109,10 @@ export function installGitHook(cwd: string): GitHookResult {
     }
   }
 
+  // No shell-level bypass: the CLI handles QUALITY_GATE_BYPASS itself by
+  // downgrading to security-only mode instead of skipping everything.
   const content = `#!/usr/bin/env sh
 ${MARKER}
-[ "$QUALITY_GATE_BYPASS" = "1" ] && exit 0
 ${preamble}${cliInvocation()} check --staged --mode pre-commit --format human
 `;
   writeFileSync(hookPath, content, { mode: 0o755 });
@@ -86,8 +121,12 @@ ${preamble}${cliInvocation()} check --staged --mode pre-commit --format human
 }
 
 /**
- * Registers a Claude Code PreToolUse(Bash) hook in the project's
- * `.claude/settings.json`, merging without clobbering existing hooks.
+ * Registers the Claude Code hooks in the project's `.claude/settings.json`,
+ * merging without clobbering existing hooks:
+ *   - PreToolUse(Bash): blocks an agent's `git commit` when the gate fails.
+ *   - PostToolUse(Edit|Write|MultiEdit): runs the gate on the just-edited file
+ *     and feeds violations back immediately — fixing at edit time is cheaper
+ *     than discovering at commit time.
  */
 export function registerClaudeHook(cwd: string): string {
   const claudeDir = join(cwd, '.claude');
@@ -104,18 +143,25 @@ export function registerClaudeHook(cwd: string): string {
   }
 
   const hooks = (settings.hooks ?? {}) as Record<string, unknown>;
-  const preToolUse = Array.isArray(hooks.PreToolUse) ? (hooks.PreToolUse as unknown[]) : [];
 
-  const command = `${cliInvocation()} claude-hook`;
-  const alreadyRegistered = JSON.stringify(preToolUse).includes('claude-hook');
-  if (!alreadyRegistered) {
+  const preToolUse = Array.isArray(hooks.PreToolUse) ? (hooks.PreToolUse as unknown[]) : [];
+  if (!JSON.stringify(preToolUse).includes('claude-hook')) {
     preToolUse.push({
       matcher: 'Bash',
-      hooks: [{ type: 'command', command }],
+      hooks: [{ type: 'command', command: `${cliInvocation()} claude-hook` }],
     });
   }
-
   hooks.PreToolUse = preToolUse;
+
+  const postToolUse = Array.isArray(hooks.PostToolUse) ? (hooks.PostToolUse as unknown[]) : [];
+  if (!JSON.stringify(postToolUse).includes('claude-post-edit-hook')) {
+    postToolUse.push({
+      matcher: 'Edit|Write|MultiEdit',
+      hooks: [{ type: 'command', command: `${cliInvocation()} claude-post-edit-hook` }],
+    });
+  }
+  hooks.PostToolUse = postToolUse;
+
   settings.hooks = hooks;
   writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`);
   return settingsPath;
