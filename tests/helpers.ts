@@ -65,6 +65,7 @@ export function baselineWith(partial: {
   typeSafety?: Partial<FileBaseline['metrics']['typeSafety']>;
   functionLengthPerFunction?: Record<string, number>;
   parameterCountPerFunction?: Record<string, number>;
+  silentCatch?: { count: number };
 }): FileBaseline {
   return {
     fileHash: 'test',
@@ -92,6 +93,7 @@ export function baselineWith(partial: {
         max: 0,
         perFunction: partial.parameterCountPerFunction ?? {},
       },
+      silentCatch: partial.silentCatch ?? { count: 0 },
     },
   };
 }

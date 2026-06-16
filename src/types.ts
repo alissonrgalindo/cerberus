@@ -99,6 +99,8 @@ export type FileBaseline = {
     functionLength?: { max: number; perFunction: Record<string, number> };
     /** Optional — added in v1.1; absent on older baselines (treat missing as 0). */
     parameterCount?: { max: number; perFunction: Record<string, number> };
+    /** Optional — added in v1.2; absent on older baselines (treat missing as 0). Delta-grandfathers legacy empty catches. */
+    silentCatch?: { count: number };
   };
 };
 

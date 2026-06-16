@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { analyzeSilentCatch } from '../../src/analyzers/silent-catch.js';
-import { inputFromSource } from '../helpers.js';
+import { baselineWith, inputFromSource } from '../helpers.js';
 
 describe('silent-catch analyzer', () => {
   it('passes when there are no try/catch blocks', async () => {
@@ -27,6 +27,30 @@ describe('silent-catch analyzer', () => {
     const result = await analyzeSilentCatch(inputFromSource('inline.ts', src));
     expect(result.passed).toBe(false);
     expect(result.violations[0].suggestion).toMatch(/only logs to console/);
+  });
+
+  it('grandfathers silent catches already captured in the baseline (legacy not blocked)', async () => {
+    const src = `export async function load() {
+  try { await a(); } catch (e) {}
+  try { await b(); } catch (e) {}
+}`;
+    const result = await analyzeSilentCatch(
+      inputFromSource('legacy.ts', src, { baseline: baselineWith({ silentCatch: { count: 2 } }) }),
+    );
+    expect(result.passed).toBe(true);
+    expect(result.metrics.silentCatchCount).toBe(2);
+  });
+
+  it('flags a silent catch added beyond the baseline count', async () => {
+    const src = `export async function load() {
+  try { await a(); } catch (e) {}
+  try { await b(); } catch (e) {}
+  try { await c(); } catch (e) {}
+}`;
+    const result = await analyzeSilentCatch(
+      inputFromSource('legacy.ts', src, { baseline: baselineWith({ silentCatch: { count: 2 } }) }),
+    );
+    expect(result.passed).toBe(false);
   });
 
   it('passes when the catch rethrows', async () => {
