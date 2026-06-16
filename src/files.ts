@@ -2,8 +2,9 @@ import { readdirSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import picomatch from 'picomatch';
 
-const TS_EXT = /\.(ts|tsx|mts|cts)$/;
-const DTS_EXT = /\.d\.ts$/;
+/** Source extensions the gate analyzes: TypeScript and JavaScript (declaration files excluded). */
+export const CODE_EXT = /\.(ts|tsx|mts|cts|js|jsx|mjs|cjs)$/;
+export const DTS_EXT = /\.d\.ts$/;
 /** Directories never worth walking regardless of config. */
 const ALWAYS_SKIP = new Set(['node_modules', '.git', 'dist', '.next', '.turbo', 'coverage']);
 
@@ -18,7 +19,7 @@ export function makeIgnoreMatcher(patterns: string[]): (relPosixPath: string) =>
   return (relPosixPath: string) => isMatch(relPosixPath);
 }
 
-/** Recursively collects analyzable TS/TSX files under rootDir, honoring ignore globs. */
+/** Recursively collects analyzable TS/JS source files under rootDir, honoring ignore globs. */
 export function walkTsFiles(rootDir: string, ignore: string[]): string[] {
   const isIgnored = makeIgnoreMatcher(ignore);
   const out: string[] = [];
@@ -29,7 +30,7 @@ export function walkTsFiles(rootDir: string, ignore: string[]): string[] {
       if (entry.isDirectory()) {
         if (ALWAYS_SKIP.has(entry.name)) continue;
         walk(full);
-      } else if (entry.isFile() && TS_EXT.test(entry.name) && !DTS_EXT.test(entry.name)) {
+      } else if (entry.isFile() && CODE_EXT.test(entry.name) && !DTS_EXT.test(entry.name)) {
         const rel = toPosix(relative(rootDir, full));
         if (!isIgnored(rel)) out.push(full);
       }

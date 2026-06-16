@@ -17,7 +17,7 @@ import { isGitCommit } from './commit-detect.js';
 import { CONFIG_FILE, loadConfig } from './config.js';
 import { listDrift, type DriftEntry } from './drift.js';
 import { analyzeFile, analyzePythonFile, computeFileBaseline, type FileReport } from './engine.js';
-import { toPosix, walkTsFiles } from './files.js';
+import { CODE_EXT, DTS_EXT, toPosix, walkTsFiles } from './files.js';
 import { getChangedFiles, getFileContent, getStagedFiles } from './git-diff.js';
 import { applyTodoInjection, stageFiles } from './injector.js';
 import {
@@ -40,8 +40,6 @@ const JSON_SCHEMA_VERSION = 1 as const;
 
 type CheckOutcome = { report: RunReport; exitCode: number };
 
-const TS_EXT = /\.(ts|tsx|mts|cts)$/;
-const DTS_EXT = /\.d\.ts$/;
 const SQL_EXT = /\.sql$/i;
 const PY_EXT = /\.py$/;
 
@@ -54,7 +52,7 @@ function toAbs(cwd: string, p: string): string {
 }
 
 function isTsAnalyzable(absPath: string): boolean {
-  return TS_EXT.test(absPath) && !DTS_EXT.test(absPath);
+  return CODE_EXT.test(absPath) && !DTS_EXT.test(absPath);
 }
 
 function isMigrationSql(absPath: string): boolean {

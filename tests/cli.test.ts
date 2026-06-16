@@ -23,6 +23,13 @@ const NEW_BAD = `export function deep(x: number, raw: unknown): any {
 }
 `;
 
+const NEW_BAD_JS = `export function deep(x, raw) {
+  const v = raw;
+  if (x > 0) { if (x > 1) { if (x > 2) { if (x > 3) { if (x > 4) { if (x > 5) { return x; } } } } } }
+  return v;
+}
+`;
+
 function makeProject(): string {
   const dir = mkdtempSync(join(tmpdir(), 'qg-cli-'));
   writeFileSync(
@@ -69,6 +76,17 @@ describe('quality-gate CLI (e2e)', () => {
     const analyzers = new Set(parsed.files[0].violations.map((v: { analyzer: string }) => v.analyzer));
     expect(analyzers.has('cognitive-complexity')).toBe(true);
     expect(analyzers.has('type-safety')).toBe(true);
+  });
+
+  it('check --file flags a high-complexity .js file (JavaScript support)', () => {
+    const dir = makeProject();
+    run(dir, ['baseline']); // baselines only clean.ts; bad.js is unseen
+    writeFileSync(join(dir, 'src', 'bad.js'), NEW_BAD_JS);
+    const res = run(dir, ['check', '--file', 'src/bad.js', '--format', 'json']);
+    expect(res.exitCode).toBe(1);
+    const parsed = JSON.parse(res.stdout);
+    const analyzers = new Set(parsed.files[0].violations.map((v: { analyzer: string }) => v.analyzer));
+    expect(analyzers.has('cognitive-complexity')).toBe(true);
   });
 
   it('audit lists scanned files', () => {
