@@ -1,5 +1,5 @@
 import { Node, SyntaxKind } from 'ts-morph';
-import type { AnalyzerInput, AnalyzerResult, Violation } from '../types.js';
+import { JS_FILE_TYPES, type AnalyzerInput, type AnalyzerResult, type Violation } from '../types.js';
 import { createSourceFile } from './ts-project.js';
 
 const SUPPRESSION_RE = /(?:\/\/|\/\*|\*)\s*@ts-(?:ignore|expect-error|nocheck)\b/;
@@ -51,6 +51,14 @@ function fmtLines(lines: number[]): string {
 }
 
 export async function analyzeTypeSafety(input: AnalyzerInput): Promise<AnalyzerResult> {
+  // type-safety is a TypeScript concern. In JavaScript there is no `any`/`as unknown as`
+  // syntax, and `@ts-ignore`/`@ts-expect-error`/`@ts-nocheck` are the sanctioned deferral
+  // mechanism of the checkJs+JSDoc migration. Defer JS type coverage to `tsc --noEmit
+  // --checkJs`; the gate stays out of its way so it never blocks a legitimate deferral.
+  if (JS_FILE_TYPES.has(input.fileType)) {
+    return { passed: true, violations: [], metrics: {} };
+  }
+
   const counts = measureTypeSafety(input.filePath, input.fileContent);
   const baseline = input.fileBaseline?.metrics.typeSafety;
   const violations: Violation[] = [];

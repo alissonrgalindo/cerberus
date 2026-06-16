@@ -1,4 +1,4 @@
-export type FileType = 'ts' | 'tsx' | 'mts' | 'cts';
+export type FileType = 'ts' | 'tsx' | 'mts' | 'cts' | 'js' | 'jsx' | 'mjs' | 'cjs';
 
 export type AnalyzerInput = {
   filePath: string;
@@ -124,5 +124,12 @@ export function fileTypeFromPath(filePath: string): FileType {
   if (filePath.endsWith('.tsx')) return 'tsx';
   if (filePath.endsWith('.mts')) return 'mts';
   if (filePath.endsWith('.cts')) return 'cts';
+  if (filePath.endsWith('.jsx')) return 'jsx';
+  if (filePath.endsWith('.mjs')) return 'mjs';
+  if (filePath.endsWith('.cjs')) return 'cjs';
+  if (filePath.endsWith('.js')) return 'js';
   return 'ts';
 }
+
+/** JavaScript file types — type-safety escape-hatch checks don't apply (no `any`/`as`; `@ts-*` are checkJs deferrals). */
+export const JS_FILE_TYPES: ReadonlySet<FileType> = new Set(['js', 'jsx', 'mjs', 'cjs']);

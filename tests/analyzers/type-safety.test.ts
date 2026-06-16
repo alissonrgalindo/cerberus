@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { analyzeTypeSafety } from '../../src/analyzers/type-safety.js';
-import { baselineWith, inputFor } from '../helpers.js';
+import { baselineWith, inputFor, inputFromSource } from '../helpers.js';
 
 describe('type-safety analyzer', () => {
   it('passes a clean file', async () => {
@@ -38,6 +38,28 @@ describe('type-safety analyzer', () => {
     expect(result.passed).toBe(false);
     const v = result.violations.find((x) => x.suggestion.includes('ts-ignore'));
     expect(v?.current).toBe(2);
+  });
+
+  it('no-ops on JavaScript files (.js): @ts-* are the migration deferral, not a smell', async () => {
+    const js = `// @ts-nocheck
+function f(x) {
+  // @ts-expect-error legacy field read
+  return x.foo;
+}
+`;
+    const result = await analyzeTypeSafety(inputFromSource('cockpit.js', js));
+    expect(result.passed).toBe(true);
+    expect(result.violations).toHaveLength(0);
+  });
+
+  it('still flags suppression directives on TypeScript files', async () => {
+    const ts = `// @ts-expect-error
+const a: number = 1;
+// @ts-ignore
+const b: number = 2;
+`;
+    const result = await analyzeTypeSafety(inputFromSource('app.ts', ts));
+    expect(result.passed).toBe(false);
   });
 
   it('flags `as unknown as` double casts', async () => {
