@@ -1,5 +1,5 @@
 import { Node, SyntaxKind } from 'ts-morph';
-import type { AnalyzerInput, AnalyzerResult, Violation } from '../types.js';
+import { functionBaselineFloor, type AnalyzerInput, type AnalyzerResult, type Violation } from '../types.js';
 import { createSourceFile } from './ts-project.js';
 
 /**
@@ -96,9 +96,12 @@ export async function analyzeFunctionShape(input: AnalyzerInput): Promise<Analyz
   const lengthLimit = input.config.thresholds.functionLength;
   const paramLimit = input.config.thresholds.parameterCount;
 
-  // Pull per-function baselines (delta-aware). Same keying as cognitive/cyclomatic.
+  // Pull per-function baselines (delta-aware). Named functions match by name; anonymous
+  // functions grandfather against the file's baseline max (line-shift safe).
   const baselineLengths = input.fileBaseline?.metrics.functionLength?.perFunction ?? {};
   const baselineParams = input.fileBaseline?.metrics.parameterCount?.perFunction ?? {};
+  const baselineMaxLen = input.fileBaseline?.metrics.functionLength?.max ?? 0;
+  const baselineMaxParams = input.fileBaseline?.metrics.parameterCount?.max ?? 0;
 
   let worstLength = 0;
   let worstParams = 0;
@@ -106,7 +109,7 @@ export async function analyzeFunctionShape(input: AnalyzerInput): Promise<Analyz
     worstLength = Math.max(worstLength, s.bodyLines);
     worstParams = Math.max(worstParams, s.paramCount);
 
-    const baseLen = baselineLengths[s.name] ?? 0;
+    const baseLen = functionBaselineFloor(s.name, baselineLengths, baselineMaxLen, 0);
     if (s.bodyLines > lengthLimit && s.bodyLines > baseLen) {
       violations.push({
         analyzer: 'function-length',
@@ -119,7 +122,7 @@ export async function analyzeFunctionShape(input: AnalyzerInput): Promise<Analyz
       });
     }
 
-    const baseParams = baselineParams[s.name] ?? 0;
+    const baseParams = functionBaselineFloor(s.name, baselineParams, baselineMaxParams, 0);
     if (s.paramCount > paramLimit && s.paramCount > baseParams) {
       violations.push({
         analyzer: 'parameter-count',

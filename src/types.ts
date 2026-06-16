@@ -121,6 +121,23 @@ export function baselineKey(fn: FunctionScore): string {
   return fn.name === '<anonymous>' ? `${fn.name}:${fn.line}` : fn.name;
 }
 
+/**
+ * Per-function baseline floor that survives line shifts. Named functions match by name
+ * (stable across edits). Anonymous functions have no stable identity — their only handle
+ * is a line number, which any surrounding edit (e.g. adding `// @ts-check` + JSDoc) moves —
+ * so they grandfather against the file's baseline MAX for the metric: a legacy anonymous
+ * function is never re-flagged just because lines moved, and only a value worse than
+ * anything that already existed (or any function in a baseline-less file) is reported.
+ */
+export function functionBaselineFloor(
+  name: string,
+  perFunction: Record<string, number> | undefined,
+  baselineMax: number,
+  fallback: number,
+): number {
+  return name === '<anonymous>' ? baselineMax : (perFunction?.[name] ?? fallback);
+}
+
 /** Detects the FileType from a path extension. Defaults to 'ts'. */
 export function fileTypeFromPath(filePath: string): FileType {
   if (filePath.endsWith('.tsx')) return 'tsx';

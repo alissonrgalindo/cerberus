@@ -1,6 +1,6 @@
 import { getSourceOutput } from 'cognitive-complexity-ts';
 import {
-  baselineKey,
+  functionBaselineFloor,
   type AnalyzerInput,
   type AnalyzerResult,
   type FunctionScore,
@@ -58,12 +58,14 @@ export async function analyzeCognitive(input: AnalyzerInput): Promise<AnalyzerRe
       : input.config.thresholds.cognitiveComplexity;
 
   const perFunctionBaseline = input.fileBaseline?.metrics.cognitiveComplexity.perFunction;
+  const baselineMax = input.fileBaseline?.metrics.cognitiveComplexity.max ?? 0;
   const violations: Violation[] = [];
 
   for (const fn of flat) {
-    // Existing function uses its own baseline as the floor; an unknown function
-    // (new file or new symbol) is held to the absolute threshold.
-    const baseline = perFunctionBaseline?.[fn.name] ?? perFunctionBaseline?.[baselineKey(fn)] ?? threshold;
+    // Named functions use their own per-name baseline; anonymous functions can't be keyed
+    // across line shifts, so they grandfather against the file's baseline max. An unknown
+    // named symbol (new file or new symbol) is held to the absolute threshold.
+    const baseline = functionBaselineFloor(fn.name, perFunctionBaseline, baselineMax, threshold);
     // Violation only if it both exceeds the threshold AND got worse than baseline.
     if (fn.score > threshold && fn.score > baseline) {
       violations.push({

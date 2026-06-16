@@ -1,6 +1,6 @@
 import { Node, SyntaxKind } from 'ts-morph';
 import {
-  baselineKey,
+  functionBaselineFloor,
   type AnalyzerInput,
   type AnalyzerResult,
   type FunctionScore,
@@ -94,13 +94,14 @@ export async function analyzeCyclomatic(input: AnalyzerInput): Promise<AnalyzerR
   const functions = measureCyclomatic(input.filePath, input.fileContent);
   const threshold = input.config.thresholds.cyclomaticComplexity;
   const perFunctionBaseline = input.fileBaseline?.metrics.cyclomaticComplexity.perFunction;
+  const baselineMax = input.fileBaseline?.metrics.cyclomaticComplexity.max ?? 0;
 
   const violations: Violation[] = [];
   let max = 0;
 
   for (const fn of functions) {
     max = Math.max(max, fn.score);
-    const baseline = perFunctionBaseline?.[fn.name] ?? perFunctionBaseline?.[baselineKey(fn)] ?? threshold;
+    const baseline = functionBaselineFloor(fn.name, perFunctionBaseline, baselineMax, threshold);
     if (fn.score > threshold && fn.score > baseline) {
       violations.push({
         analyzer: 'cyclomatic-complexity',

@@ -66,16 +66,20 @@ export function baselineWith(partial: {
   functionLengthPerFunction?: Record<string, number>;
   parameterCountPerFunction?: Record<string, number>;
   silentCatch?: { count: number };
+  cognitiveMax?: number;
+  cyclomaticMax?: number;
+  functionLengthMax?: number;
+  parameterCountMax?: number;
 }): FileBaseline {
   return {
     fileHash: 'test',
     metrics: {
       cognitiveComplexity: {
-        max: 0,
+        max: partial.cognitiveMax ?? 0,
         perFunction: partial.cognitivePerFunction ?? {},
       },
       cyclomaticComplexity: {
-        max: 0,
+        max: partial.cyclomaticMax ?? 0,
         perFunction: partial.cyclomaticPerFunction ?? {},
       },
       typeSafety: {
@@ -86,11 +90,11 @@ export function baselineWith(partial: {
       },
       coverage: { percent: 0 },
       functionLength: {
-        max: 0,
+        max: partial.functionLengthMax ?? 0,
         perFunction: partial.functionLengthPerFunction ?? {},
       },
       parameterCount: {
-        max: 0,
+        max: partial.parameterCountMax ?? 0,
         perFunction: partial.parameterCountPerFunction ?? {},
       },
       silentCatch: partial.silentCatch ?? { count: 0 },
