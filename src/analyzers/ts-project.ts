@@ -20,7 +20,7 @@ function getProject(): Project {
       useInMemoryFileSystem: true,
       skipAddingFilesFromTsConfig: true,
       compilerOptions: {
-        allowJs: false,
+        allowJs: true,
         jsx: ts.JsxEmit.Preserve,
         target: ts.ScriptTarget.ESNext,
       },
