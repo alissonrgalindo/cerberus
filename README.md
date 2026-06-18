@@ -1,6 +1,6 @@
 # code-quality-gate
 
-A **pre-commit quality gate** for AI-agent-generated **TypeScript and Python**. It measures quality on the **files you touch** (not the whole repo) and blocks commits that regress past configurable thresholds — using **delta vs. a baseline**, so legacy code isn't forced to refactor.
+A **pre-commit quality gate** for AI-agent-generated **TypeScript, JavaScript, and Python**. It measures quality on the **files you touch** (not the whole repo) and blocks commits that regress past configurable thresholds — using **delta vs. a baseline**, so legacy code isn't forced to refactor.
 
 > Private / internal tool. Not published to npm.
 
@@ -62,6 +62,15 @@ Complexity, type-safety, transaction-required, revalidate-required, n-plus-one-q
 - **secret-in-diff** already scans every staged file, including `.py`.
 
 Complexity/function-shape metrics for Python (with baseline support) are a planned follow-up. Suppressions use the comment form: `# quality-gate-allow: injection`.
+
+## JavaScript support
+
+`.js`, `.mjs`, `.jsx`, and `.cjs` files flow through the **same gate as TypeScript** — no rename required, which is what makes a `checkJs` + JSDoc codebase enforceable. Source is parsed to an AST with `allowJs`, so **every analyzer except `type-safety` runs on `.js` exactly as on `.ts`** — same metrics, limits, security tier, and delta-vs-baseline grandfathering. That covers the complexity/shape analyzers (cognitive- & cyclomatic-complexity, function-length, parameter-count, shallow-module), the presence-based ones (silent-catch, injection, hallucinated-import, n-plus-one-query, transaction/revalidate-required), and the staged-set passes (duplication, secret-in-diff, new-dependency, migration-safety).
+
+- **type-safety is a no-op on JavaScript** — it's the only analyzer that needs the TS type-checker. A `checkJs` + JSDoc migration keeps its `@ts-expect-error` / `@ts-ignore` deferrals and `@type {any}` JSDoc in `.js` files, and the gate does **not** flag them as new-`any` regressions (they're a typing-migration tool, not a TS escape hatch).
+- **`.d.ts`** files are excluded from analysis (still scanned by secret-in-diff).
+- Anonymous functions are grandfathered against the file's baseline maximum, so adding `// @ts-check` + JSDoc (which shifts line numbers) never produces a false complexity/length regression.
+- Suppressions use the same line-comment form as TS: `// quality-gate-allow: shallow-module`.
 
 ## Security tier (non-bypassable)
 

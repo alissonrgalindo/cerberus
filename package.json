@@ -1,6 +1,6 @@
 {
   "name": "code-quality-gate",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "private": true,
   "description": "Pre-commit quality gate plugin for AI-agent generated code",
   "type": "module",

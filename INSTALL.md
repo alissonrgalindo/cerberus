@@ -1,6 +1,6 @@
 # Installing the quality gate into a project
 
-Step-by-step for wiring `code-quality-gate` into a consumer repo (TypeScript, Python, or both). Written so a human **or a coding agent** can execute it top to bottom.
+Step-by-step for wiring `code-quality-gate` into a consumer repo (TypeScript, JavaScript, Python, or any mix). Written so a human **or a coding agent** can execute it top to bottom.
 
 ## 0. Requirements
 
@@ -92,6 +92,8 @@ For Python repos, same idea with `eval(x)` in a `.py` file (blocked by `injectio
 ## Per-language notes
 
 **TypeScript** — full analyzer set: complexity (delta vs. baseline), type-safety, coverage delta, duplication, transaction/revalidate/N+1 (Next.js+Drizzle), silent-catch, hallucinated-import, shallow-module, function shape, injection, secrets, new-dependency (package.json vs. npm/pnpm/yarn/bun lockfile).
+
+**JavaScript** (`.js`/`.mjs`/`.jsx`/`.cjs`) — same set as TypeScript **minus type-safety** (the only type-checker-based analyzer; no-op on JS). Complexity/shape metrics use the baseline exactly like `.ts`. Parsed with `allowJs`; `.d.ts` excluded (still secret-scanned). Lets a `checkJs` + JSDoc codebase be gated without renaming to `.ts`.
 
 **Python** — presence-based set: silent-catch (`except: pass` / log-only), injection (`eval`/`exec`, `os.system`/`subprocess(shell=True)` dynamic, non-parameterized SQL), hallucinated-import (vs. `pyproject.toml`/`requirements*.txt`), new-dependency (pyproject vs. poetry/uv/pdm lock), secrets. No baseline needed for Python files in v1.
 

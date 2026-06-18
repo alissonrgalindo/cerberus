@@ -1,6 +1,6 @@
 {
   "name": "code-quality-gate",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Pre-commit code quality gate for AI-agent generated code. Validates complexity, type-safety, coverage, and duplication.",
   "author": "Alison Galindo",
   "hooks": {
