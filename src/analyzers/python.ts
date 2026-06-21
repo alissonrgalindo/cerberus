@@ -18,7 +18,8 @@ import type { AnalyzerInput, AnalyzerResult, Violation } from '../types.js';
  * `# quality-gate-allow: silent-catch` / `injection` / `hallucinated-import`.
  */
 
-const SUPPRESS = (kind: string): RegExp => new RegExp(`quality-gate-allow:\\s*${kind}\\b`);
+const SUPPRESS = (kind: string): RegExp =>
+  new RegExp(`(?:cerberus|quality-gate)-allow:\\s*${kind}\\b`);
 
 type Line = { text: string; indent: number; code: string };
 

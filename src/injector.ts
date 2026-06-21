@@ -6,7 +6,7 @@ import type { Violation } from './types.js';
 
 /** Builds the debt comment injected above a problematic symbol. */
 export function buildTodoComment(v: Violation, attempt: string): string {
-  return `// TODO: quality-gate(${v.analyzer}=${v.current}, limit=${v.threshold}, attempt=${attempt})`;
+  return `// TODO: cerberus(${v.analyzer}=${v.current}, limit=${v.threshold}, attempt=${attempt})`;
 }
 
 /** Extracts the 1-based source line a violation points at, if any. */
@@ -19,7 +19,7 @@ function targetLine(v: Violation): number {
 }
 
 /**
- * Inserts `// TODO: quality-gate(...)` comments above each violating line.
+ * Inserts `// TODO: cerberus(...)` comments above each violating line.
  * Inserts bottom-up so earlier line numbers stay valid, matches indentation,
  * and skips a comment that is already present directly above the target.
  */

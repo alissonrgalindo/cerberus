@@ -32,7 +32,7 @@ import { createSourceFile } from './ts-project.js';
  * line comment on the function declaration when intentional.
  */
 
-const SUPPRESSION = /quality-gate-allow:\s*shallow-module\b/;
+const SUPPRESSION = /(?:cerberus|quality-gate)-allow:\s*shallow-module\b/;
 
 type Finding = { name: string; line: number; reason: string };
 

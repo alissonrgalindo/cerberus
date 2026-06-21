@@ -68,7 +68,8 @@ function isAnalyzable(absPath: string): boolean {
 }
 
 function bypassActive(): boolean {
-  return process.env.QUALITY_GATE_BYPASS === '1';
+  // CERBERUS_BYPASS is canonical; QUALITY_GATE_BYPASS kept as a legacy alias.
+  return process.env.CERBERUS_BYPASS === '1' || process.env.QUALITY_GATE_BYPASS === '1';
 }
 
 /**
@@ -236,12 +237,15 @@ async function runClaudeHook(): Promise<void> {
   const cwd = payload.cwd ?? process.cwd();
   if (payload.tool_name !== 'Bash' || !isGitCommit(command)) process.exit(0);
 
-  // A bypass ([skip-quality] in the message, or QUALITY_GATE_BYPASS anywhere —
-  // including inline in the command the agent wrote) only skips the QUALITY
-  // analyzers. Security analyzers always run: an agent must never be able to
-  // talk itself past a leaked secret or an injection sink.
+  // A bypass ([skip-cerberus] / [skip-quality] in the message, or
+  // CERBERUS_BYPASS / QUALITY_GATE_BYPASS anywhere — including inline in the
+  // command the agent wrote) only skips the QUALITY analyzers. Security
+  // analyzers always run: an agent must never be able to talk itself past a
+  // leaked secret or an injection sink. Legacy names kept as aliases.
   const securityOnly =
+    /\[skip-cerberus\]/.test(command) ||
     /\[skip-quality\]/.test(command) ||
+    /\bCERBERUS_BYPASS=1\b/.test(command) ||
     /\bQUALITY_GATE_BYPASS=1\b/.test(command) ||
     bypassActive();
 

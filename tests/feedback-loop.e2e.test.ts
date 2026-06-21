@@ -85,7 +85,7 @@ describe('feedback loop (e2e)', () => {
       execaSync('git', ['add', 'leak.py'], { cwd: dir });
       const res = run(dir, ['check', '--staged', '--format', 'github']);
       expect(res.exitCode).toBe(1);
-      expect(res.stdout).toMatch(/^::error file=leak\.py,line=1,title=quality-gate%3A injection \[SECURITY\]::/m);
+      expect(res.stdout).toMatch(/^::error file=leak\.py,line=1,title=cerberus%3A injection \[SECURITY\]::/m);
     });
 
     it('emits nothing on a clean check', () => {

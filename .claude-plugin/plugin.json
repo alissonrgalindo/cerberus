@@ -1,7 +1,7 @@
 {
-  "name": "code-quality-gate",
-  "version": "0.1.0",
-  "description": "Pre-commit code quality gate for AI-agent generated code. Validates complexity, type-safety, coverage, and duplication. Detects baseline drift and supports Husky.",
+  "name": "cerberus",
+  "version": "0.2.0",
+  "description": "Cerberus — deterministic quality & security gate for AI-agent generated code. Validates complexity, type-safety, security, coverage, and duplication. Detects baseline drift and supports Husky.",
   "author": {
     "name": "Alison Galindo"
   }

@@ -1,10 +1,11 @@
 {
-  "name": "code-quality-gate",
-  "version": "0.1.0",
+  "name": "cerberus",
+  "version": "0.2.0",
   "private": true,
-  "description": "Pre-commit quality gate plugin for AI-agent generated code",
+  "description": "Cerberus — deterministic quality & security gate for AI-agent generated code (formerly code-quality-gate)",
   "type": "module",
   "bin": {
+    "cerberus": "./dist/cli.js",
     "quality-gate": "./dist/cli.js"
   },
   "scripts": {
@@ -13,7 +14,7 @@
     "test": "vitest",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
-    "pack:plugin": "pnpm run build && rm -f code-quality-gate.plugin && zip -rq code-quality-gate.plugin .claude-plugin hooks skills commands dist README.md INSTALL.md"
+    "pack:plugin": "pnpm run build && rm -f cerberus.plugin && zip -rq cerberus.plugin .claude-plugin hooks skills commands dist README.md INSTALL.md"
   },
   "dependencies": {
     "cognitive-complexity-ts": "^0.8.1",

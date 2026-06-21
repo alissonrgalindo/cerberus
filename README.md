@@ -1,8 +1,22 @@
-# code-quality-gate
+# Cerberus
 
-A **pre-commit quality gate** for AI-agent-generated **TypeScript, JavaScript, and Python**. It measures quality on the **files you touch** (not the whole repo) and blocks commits that regress past configurable thresholds — using **delta vs. a baseline**, so legacy code isn't forced to refactor.
+> Formerly `code-quality-gate`. Renamed with **full backward compatibility** — the old
+> binary name (`quality-gate`), config files (`.quality-gate.json`), presets
+> (`@quality-gate/*`), suppress comments (`// quality-gate-allow:`), and `QUALITY_GATE_BYPASS`
+> all still work as aliases. See [PUBLISH-CERBERUS.md](./PUBLISH-CERBERUS.md) for the rename map.
 
-> Private / internal tool. Not published to npm.
+The deterministic **quality & security gate** for AI-agent-generated **TypeScript,
+JavaScript, and Python** — the engine half of the **Cerberus** suite (the orchestrator half
+is [`no-mistakes`](./decisions/0001-no-mistakes-integration-be-safe.md)). It measures quality
+on the **files you touch** (not the whole repo) and blocks commits that regress past
+configurable thresholds — using **delta vs. a baseline**, so legacy code isn't forced to
+refactor.
+
+> Private / internal tool. Consumed by the product repos as a git devDependency.
+
+Canonical names: binary `cerberus`, config `.cerberus.json`, baseline `.cerberus-baseline.json`,
+presets `@cerberus/{nextjs,monorepo-turborepo,node-cli}`, suppress `// cerberus-allow: <rule>`,
+bypass `CERBERUS_BYPASS=1` / `[skip-cerberus]`.
 
 ## What it checks
 

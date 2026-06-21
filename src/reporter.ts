@@ -38,7 +38,7 @@ export function reportGithub(report: RunReport): void {
     for (const v of f.violations) {
       count += 1;
       const security = isSecurityViolation(v);
-      const title = `quality-gate: ${v.analyzer}${security ? ' [SECURITY]' : ''}`;
+      const title = `cerberus: ${v.analyzer}${security ? ' [SECURITY]' : ''}`;
       const line = lineFromLocation(v.location);
       process.stdout.write(
         `::error file=${escapeProperty(f.file)},line=${line},title=${escapeProperty(title)}::${escapeData(v.suggestion)}\n`,
@@ -47,8 +47,8 @@ export function reportGithub(report: RunReport): void {
   }
   process.stderr.write(
     count === 0
-      ? '✓ quality-gate: all checks passed\n'
-      : `✗ quality-gate: ${count} violation(s) annotated on the diff\n`,
+      ? '✓ cerberus: all checks passed\n'
+      : `✗ cerberus: ${count} violation(s) annotated on the diff\n`,
   );
 }
 
@@ -61,7 +61,7 @@ export function reportHuman(report: RunReport): void {
   if (report.status === 'PASS_WITH_TODO') {
     process.stderr.write(
       chalk.yellow(
-        `⚠ quality-gate: ${failed.length} file(s) still failing after ${report.attempt} attempts — letting the commit through (debt flagged).\n`,
+        `⚠ cerberus: ${failed.length} file(s) still failing after ${report.attempt} attempts — letting the commit through (debt flagged).\n`,
       ),
     );
     for (const f of failed) writeFileBlock(f);
@@ -69,12 +69,12 @@ export function reportHuman(report: RunReport): void {
   }
 
   if (failed.length === 0) {
-    process.stderr.write(chalk.green('✓ quality-gate: all checks passed\n'));
+    process.stderr.write(chalk.green('✓ cerberus: all checks passed\n'));
     return;
   }
 
   const attemptStr = report.attempt ? chalk.dim(` (attempt ${report.attempt})`) : '';
-  process.stderr.write(chalk.red(`✗ quality-gate: ${failed.length} file(s) with violations`) + attemptStr + '\n');
+  process.stderr.write(chalk.red(`✗ cerberus: ${failed.length} file(s) with violations`) + attemptStr + '\n');
   for (const f of failed) writeFileBlock(f);
   // No bypass hint here on purpose: this output is also read by coding agents
   // via the git hook, and advertising the escape hatch defeats the gate.

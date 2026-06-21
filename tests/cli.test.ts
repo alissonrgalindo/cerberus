@@ -55,7 +55,7 @@ describe('quality-gate CLI (e2e)', () => {
     const dir = makeProject();
     const res = run(dir, ['baseline']);
     expect(res.exitCode).toBe(0);
-    expect(existsSync(join(dir, '.quality-gate-baseline.json'))).toBe(true);
+    expect(existsSync(join(dir, '.cerberus-baseline.json'))).toBe(true);
   });
 
   it('check --file on a clean file exits 0', () => {
@@ -220,7 +220,7 @@ describe('quality-gate CLI (e2e)', () => {
     expect(res.exitCode).toBe(0);
     expect(res.stdout).toMatch(/2 file\(s\) updated/);
     const baseline = JSON.parse(
-      readFileSync(join(dir, '.quality-gate-baseline.json'), 'utf8'),
+      readFileSync(join(dir, '.cerberus-baseline.json'), 'utf8'),
     );
     expect(baseline.files['src/a.ts']).toBeDefined();
     expect(baseline.files['src/b.ts']).toBeDefined();
@@ -231,13 +231,13 @@ describe('quality-gate CLI (e2e)', () => {
     run(dir, ['baseline']);
     writeFileSync(join(dir, 'src', 'clean.ts'), CLEAN + '\nexport const x = 1;\n');
     const before = JSON.parse(
-      readFileSync(join(dir, '.quality-gate-baseline.json'), 'utf8'),
+      readFileSync(join(dir, '.cerberus-baseline.json'), 'utf8'),
     );
     const res = run(dir, ['refresh-baseline', '--all-drifted']);
     expect(res.exitCode).toBe(0);
     expect(res.stdout).toMatch(/1 file\(s\) updated/);
     const after = JSON.parse(
-      readFileSync(join(dir, '.quality-gate-baseline.json'), 'utf8'),
+      readFileSync(join(dir, '.cerberus-baseline.json'), 'utf8'),
     );
     expect(after.files['src/clean.ts'].fileHash).not.toBe(
       before.files['src/clean.ts'].fileHash,

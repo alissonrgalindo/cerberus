@@ -101,7 +101,7 @@ describe('install-hooks (integration)', () => {
 
     // a commit now exists and the file carries the debt flag
     expect(git(dir, ['rev-parse', 'HEAD']).exitCode).toBe(0);
-    expect(readFileSync(join(dir, 'src', 'bad.tsx'), 'utf8')).toContain('TODO: quality-gate(');
+    expect(readFileSync(join(dir, 'src', 'bad.tsx'), 'utf8')).toContain('TODO: cerberus(');
   });
 
   it('QUALITY_GATE_BYPASS=1 lets a bad commit through immediately', () => {

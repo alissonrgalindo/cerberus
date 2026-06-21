@@ -2,15 +2,24 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Baseline } from './types.js';
 
-export const BASELINE_FILE = '.quality-gate-baseline.json';
+/** Canonical baseline file. */
+export const BASELINE_FILE = '.cerberus-baseline.json';
+/** Legacy baseline file, still read when the canonical one is absent. */
+export const LEGACY_BASELINE_FILE = '.quality-gate-baseline.json';
 
 export function loadBaseline(cwd: string): Baseline | null {
-  const path = join(cwd, BASELINE_FILE);
-  if (!existsSync(path)) return null;
+  const cerberusPath = join(cwd, BASELINE_FILE);
+  const legacyPath = join(cwd, LEGACY_BASELINE_FILE);
+  const path = existsSync(cerberusPath)
+    ? cerberusPath
+    : existsSync(legacyPath)
+      ? legacyPath
+      : null;
+  if (!path) return null;
   try {
     return JSON.parse(readFileSync(path, 'utf8')) as Baseline;
   } catch (err) {
-    throw new Error(`Invalid ${BASELINE_FILE}: ${(err as Error).message}`);
+    throw new Error(`Invalid ${path}: ${(err as Error).message}`);
   }
 }
 

@@ -8,17 +8,27 @@ import type { Config } from './types.js';
 
 type PartialConfig = Partial<Config> & { extends?: string };
 
-/** Internal presets resolvable via `extends`. */
+/**
+ * Internal presets resolvable via `extends`.
+ * `@cerberus/*` is the canonical scope; `@quality-gate/*` is kept as a
+ * backward-compatible alias so existing consumer configs keep working.
+ */
 const PRESETS: Record<string, PartialConfig> = {
+  '@cerberus/nextjs': nextjsPreset as PartialConfig,
   '@quality-gate/nextjs': nextjsPreset as PartialConfig,
   nextjs: nextjsPreset as PartialConfig,
+  '@cerberus/node-cli': nodeCliPreset as PartialConfig,
   '@quality-gate/node-cli': nodeCliPreset as PartialConfig,
   'node-cli': nodeCliPreset as PartialConfig,
+  '@cerberus/monorepo-turborepo': monorepoPreset as PartialConfig,
   '@quality-gate/monorepo-turborepo': monorepoPreset as PartialConfig,
   'monorepo-turborepo': monorepoPreset as PartialConfig,
 };
 
-export const CONFIG_FILE = '.quality-gate.json';
+/** Canonical config file. */
+export const CONFIG_FILE = '.cerberus.json';
+/** Legacy config file, still honored when `.cerberus.json` is absent. */
+export const LEGACY_CONFIG_FILE = '.quality-gate.json';
 
 function merge(base: Config, over: PartialConfig): Config {
   return {
@@ -31,26 +41,34 @@ function merge(base: Config, over: PartialConfig): Config {
 }
 
 /**
- * Loads `.quality-gate.json` from cwd, layering: defaults <- preset (extends) <- user file.
+ * Loads the Cerberus config from cwd, layering: defaults <- preset (extends) <- user file.
+ * Prefers `.cerberus.json`, falling back to the legacy `.quality-gate.json`.
  * Returns plain defaults when no config file is present.
  */
 export function loadConfig(cwd: string): Config {
   const base = defaultConfig();
-  const path = join(cwd, CONFIG_FILE);
-  if (!existsSync(path)) return base;
+
+  const cerberusPath = join(cwd, CONFIG_FILE);
+  const legacyPath = join(cwd, LEGACY_CONFIG_FILE);
+  const path = existsSync(cerberusPath)
+    ? cerberusPath
+    : existsSync(legacyPath)
+      ? legacyPath
+      : null;
+  if (!path) return base;
 
   let user: PartialConfig;
   try {
     user = JSON.parse(readFileSync(path, 'utf8')) as PartialConfig;
   } catch (err) {
-    throw new Error(`Invalid ${CONFIG_FILE}: ${(err as Error).message}`);
+    throw new Error(`Invalid ${path}: ${(err as Error).message}`);
   }
 
   let merged = base;
   if (user.extends) {
     const preset = PRESETS[user.extends];
     if (!preset) {
-      throw new Error(`Unknown preset "${user.extends}" in ${CONFIG_FILE}`);
+      throw new Error(`Unknown preset "${user.extends}" in ${path}`);
     }
     merged = merge(merged, preset);
   }

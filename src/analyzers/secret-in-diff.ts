@@ -29,7 +29,7 @@ import type { SetViolation, Violation } from '../types.js';
  * fixtures with intentionally-fake-but-shaped tokens.
  */
 
-const SUPPRESSION = /quality-gate-allow:\s*secret\b/;
+const SUPPRESSION = /(?:cerberus|quality-gate)-allow:\s*secret\b/;
 
 type Pattern = { id: string; regex: RegExp; describe: (m: RegExpMatchArray) => string };
 

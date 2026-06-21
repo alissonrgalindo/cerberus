@@ -20,7 +20,7 @@ import { createSourceFile } from './ts-project.js';
  * Suppression: `// quality-gate-allow: injection` on the same line.
  */
 
-const SUPPRESSION = /quality-gate-allow:\s*injection\b/;
+const SUPPRESSION = /(?:cerberus|quality-gate)-allow:\s*injection\b/;
 
 type Finding = { line: number; kind: string; detail: string };
 
