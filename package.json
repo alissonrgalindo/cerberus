@@ -8,8 +8,12 @@
     "cerberus": "./dist/cli.js",
     "quality-gate": "./dist/cli.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup",
+    "prepare": "tsup",
     "dev": "tsup --watch",
     "test": "vitest",
     "lint": "eslint src/",
