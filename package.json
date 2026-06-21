@@ -13,7 +13,6 @@
   ],
   "scripts": {
     "build": "tsup",
-    "prepare": "tsup",
     "dev": "tsup --watch",
     "test": "vitest",
     "lint": "eslint src/",

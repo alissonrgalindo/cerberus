@@ -1,5 +1,6 @@
 node_modules/
-dist/
+# dist/ is intentionally committed: cerberus is distributed as a private git
+# dependency (no npm publish), so consumers need the prebuilt bin on clone.
 .turbo/
 coverage/
 *.log
