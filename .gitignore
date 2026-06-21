@@ -11,3 +11,9 @@ tsup.config.bundled_*.mjs
 .quality-gate-attempts.json
 PLAN.md
 ISSUE.md
+
+# Claude Code local config (not for public repo)
+.claude/settings.local.json
+
+# macOS junk
+.DS_Store

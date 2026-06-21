@@ -1,8 +1,10 @@
 {
   "name": "cerberus",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
-  "description": "Cerberus — deterministic quality & security gate for AI-agent generated code (formerly code-quality-gate)",
+  "license": "MIT",
+  "author": "alissonrgalindo",
+  "description": "Cerberus — deterministic quality & security gate for AI-agent generated code",
   "type": "module",
   "bin": {
     "cerberus": "./dist/cli.js",
