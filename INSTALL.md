@@ -14,9 +14,9 @@ Cerberus is distributed as a **git dependency** — it is not published to the p
 Pin a tag and add it as a dev dependency:
 
 ```bash
-pnpm add -D github:alissonrgalindo/cerberus#v0.3.0
-# npm:  npm i -D github:alissonrgalindo/cerberus#v0.3.0
-# yarn: yarn add -D github:alissonrgalindo/cerberus#v0.3.0
+pnpm add -D github:alissonrgalindo/cerberus#v0.4.0
+# npm:  npm i -D github:alissonrgalindo/cerberus#v0.4.0
+# yarn: yarn add -D github:alissonrgalindo/cerberus#v0.4.0
 ```
 
 The prebuilt `dist/` is committed, so there is no build step on install.
