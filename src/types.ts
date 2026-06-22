@@ -101,6 +101,8 @@ export type FileBaseline = {
     parameterCount?: { max: number; perFunction: Record<string, number> };
     /** Optional — added in v1.2; absent on older baselines (treat missing as 0). Delta-grandfathers legacy empty catches. */
     silentCatch?: { count: number };
+    /** Optional — added in v1.3; absent on older baselines (treat missing as 0). Delta-grandfathers legacy shallow modules. */
+    shallowModule?: { count: number };
   };
 };
 

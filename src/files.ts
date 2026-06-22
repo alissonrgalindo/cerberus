@@ -9,7 +9,6 @@ export const DTS_EXT = /\.d\.ts$/;
 const ALWAYS_SKIP = new Set(['node_modules', '.git', 'dist', '.next', '.turbo', 'coverage']);
 
 /** Normalizes an OS path to forward-slash form for glob matching. */
-// cerberus-allow: shallow-module — tiny pure path-normalization helper reused across analyzers.
 export function toPosix(p: string): string {
   return p.split(sep).join('/');
 }
@@ -21,7 +20,6 @@ export function toPosix(p: string): string {
  * (which reads a staged/changed file list, not a walk) is consistent: a repo
  * that commits its `dist/` bundle shouldn't have the gate grade the bundle.
  */
-// cerberus-allow: shallow-module — named path predicate; the name is the abstraction.
 export function isBuildArtifactPath(relPosixPath: string): boolean {
   return relPosixPath.split('/').some((segment) => ALWAYS_SKIP.has(segment));
 }

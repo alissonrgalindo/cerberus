@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-06-22T19:01:54.823Z",
+  "generatedAt": "2026-06-22T19:47:26.192Z",
   "files": {
     "eslint.config.js": {
       "fileHash": "ce2a45e7fad3936d27b4023caffd84202c95443996a3bca5a4e98a87cf9c7b67",
@@ -30,6 +30,9 @@
           "perFunction": {}
         },
         "silentCatch": {
+          "count": 0
+        },
+        "shallowModule": {
           "count": 0
         }
       }
@@ -62,6 +65,9 @@
           "perFunction": {}
         },
         "silentCatch": {
+          "count": 0
+        },
+        "shallowModule": {
           "count": 0
         }
       }
@@ -115,6 +121,9 @@
           }
         },
         "silentCatch": {
+          "count": 0
+        },
+        "shallowModule": {
           "count": 0
         }
       }
@@ -176,6 +185,9 @@
           }
         },
         "silentCatch": {
+          "count": 0
+        },
+        "shallowModule": {
           "count": 0
         }
       }
@@ -241,6 +253,9 @@
         },
         "silentCatch": {
           "count": 0
+        },
+        "shallowModule": {
+          "count": 0
         }
       }
     },
@@ -290,6 +305,9 @@
         },
         "silentCatch": {
           "count": 1
+        },
+        "shallowModule": {
+          "count": 0
         }
       }
     },
@@ -338,6 +356,9 @@
           }
         },
         "silentCatch": {
+          "count": 0
+        },
+        "shallowModule": {
           "count": 0
         }
       }
@@ -405,6 +426,9 @@
         },
         "silentCatch": {
           "count": 1
+        },
+        "shallowModule": {
+          "count": 0
         }
       }
     },
@@ -506,6 +530,9 @@
         },
         "silentCatch": {
           "count": 0
+        },
+        "shallowModule": {
+          "count": 0
         }
       }
     },
@@ -566,6 +593,9 @@
           }
         },
         "silentCatch": {
+          "count": 0
+        },
+        "shallowModule": {
           "count": 0
         }
       }
@@ -635,6 +665,9 @@
           }
         },
         "silentCatch": {
+          "count": 0
+        },
+        "shallowModule": {
           "count": 0
         }
       }
@@ -740,6 +773,9 @@
           }
         },
         "silentCatch": {
+          "count": 0
+        },
+        "shallowModule": {
           "count": 0
         }
       }
@@ -859,6 +895,9 @@
         },
         "silentCatch": {
           "count": 1
+        },
+        "shallowModule": {
+          "count": 1
         }
       }
     },
@@ -932,6 +971,9 @@
         },
         "silentCatch": {
           "count": 0
+        },
+        "shallowModule": {
+          "count": 0
         }
       }
     },
@@ -993,11 +1035,14 @@
         },
         "silentCatch": {
           "count": 0
+        },
+        "shallowModule": {
+          "count": 0
         }
       }
     },
     "src/analyzers/shallow-module.ts": {
-      "fileHash": "2c8e960a8b78c4a610e2f63f429595543f1da8a27afe36ef2bf85aea6e7e4d5c",
+      "fileHash": "a994dd0bd9019a00b76bd950fc4f90d838a560b6a975a2590545128ef2ba7f38",
       "metrics": {
         "cognitiveComplexity": {
           "max": 25,
@@ -1007,8 +1052,9 @@
             "isPureDelegationBody": 23,
             "hasSuppression": 3,
             "findShallowModules": 25,
-            "analyzeShallowModule": 0,
-            "<anonymous>:130": 0
+            "measureShallowModule": 0,
+            "analyzeShallowModule": 2,
+            "<anonymous>:143": 0
           }
         },
         "cyclomaticComplexity": {
@@ -1017,8 +1063,9 @@
             "isPureDelegationBody": 18,
             "hasSuppression": 3,
             "findShallowModules": 14,
-            "analyzeShallowModule": 1,
-            "<anonymous>:130": 1
+            "measureShallowModule": 1,
+            "analyzeShallowModule": 3,
+            "<anonymous>:143": 1
           }
         },
         "typeSafety": {
@@ -1035,8 +1082,9 @@
             "isPureDelegationBody": 43,
             "hasSuppression": 7,
             "findShallowModules": 36,
-            "analyzeShallowModule": 16,
-            "<anonymous>:130": 1
+            "measureShallowModule": 3,
+            "analyzeShallowModule": 24,
+            "<anonymous>:143": 1
           }
         },
         "parameterCount": {
@@ -1045,12 +1093,16 @@
             "isPureDelegationBody": 1,
             "hasSuppression": 1,
             "findShallowModules": 2,
+            "measureShallowModule": 2,
             "analyzeShallowModule": 1,
-            "<anonymous>:130": 1
+            "<anonymous>:143": 1
           }
         },
         "silentCatch": {
           "count": 0
+        },
+        "shallowModule": {
+          "count": 1
         }
       }
     },
@@ -1116,6 +1168,9 @@
         },
         "silentCatch": {
           "count": 0
+        },
+        "shallowModule": {
+          "count": 1
         }
       }
     },
@@ -1193,6 +1248,9 @@
         },
         "silentCatch": {
           "count": 0
+        },
+        "shallowModule": {
+          "count": 0
         }
       }
     },
@@ -1240,6 +1298,9 @@
           }
         },
         "silentCatch": {
+          "count": 0
+        },
+        "shallowModule": {
           "count": 0
         }
       }
@@ -1297,6 +1358,9 @@
           }
         },
         "silentCatch": {
+          "count": 0
+        },
+        "shallowModule": {
           "count": 0
         }
       }
@@ -1360,6 +1424,9 @@
         },
         "silentCatch": {
           "count": 0
+        },
+        "shallowModule": {
+          "count": 1
         }
       }
     },
@@ -1403,6 +1470,9 @@
           }
         },
         "silentCatch": {
+          "count": 0
+        },
+        "shallowModule": {
           "count": 0
         }
       }
@@ -1741,11 +1811,14 @@
         },
         "silentCatch": {
           "count": 0
+        },
+        "shallowModule": {
+          "count": 0
         }
       }
     },
     "src/commit-detect.ts": {
-      "fileHash": "b89c18f16ca289033aa5821ff41bac8e92d3ca44bfc0c26ec6afb6253fff5681",
+      "fileHash": "369c752e7c94fa8004310cc09f8a6c17bf75f8b909356efe07c1c367ca304ff3",
       "metrics": {
         "cognitiveComplexity": {
           "max": 11,
@@ -1789,6 +1862,9 @@
         },
         "silentCatch": {
           "count": 0
+        },
+        "shallowModule": {
+          "count": 1
         }
       }
     },
@@ -1834,6 +1910,9 @@
         },
         "silentCatch": {
           "count": 0
+        },
+        "shallowModule": {
+          "count": 0
         }
       }
     },
@@ -1873,6 +1952,9 @@
           }
         },
         "silentCatch": {
+          "count": 0
+        },
+        "shallowModule": {
           "count": 0
         }
       }
@@ -1919,11 +2001,14 @@
         },
         "silentCatch": {
           "count": 0
+        },
+        "shallowModule": {
+          "count": 0
         }
       }
     },
     "src/engine.ts": {
-      "fileHash": "d3107a3bc9a38895c765b9500c4ca9f245852ceaca4cdc9c540aa8cc8ecffd06",
+      "fileHash": "95dfecd6004eea514c5b4fdf2891059c13e6a6920b5cf17e2ae754fee6aa3ca7",
       "metrics": {
         "cognitiveComplexity": {
           "max": 15,
@@ -1982,7 +2067,7 @@
             "analyzePythonFile": 18,
             "<anonymous>:132": 1,
             "<anonymous>:133": 1,
-            "computeFileBaseline": 40
+            "computeFileBaseline": 41
           }
         },
         "parameterCount": {
@@ -2004,6 +2089,9 @@
         },
         "silentCatch": {
           "count": 0
+        },
+        "shallowModule": {
+          "count": 1
         }
       }
     },
@@ -2068,11 +2156,14 @@
         },
         "silentCatch": {
           "count": 0
+        },
+        "shallowModule": {
+          "count": 2
         }
       }
     },
     "src/git-diff.ts": {
-      "fileHash": "20f605aa82ddd36f593826e300c8a7478bb43a72e32d2ec0fd721b40a1f032ef",
+      "fileHash": "72c5fd027240b1ecaf55a69290736c3f37d5a9d78f6b6b6e8ae5f09e0cc848f0",
       "metrics": {
         "cognitiveComplexity": {
           "max": 2,
@@ -2128,6 +2219,9 @@
         },
         "silentCatch": {
           "count": 0
+        },
+        "shallowModule": {
+          "count": 1
         }
       }
     },
@@ -2196,6 +2290,9 @@
         },
         "silentCatch": {
           "count": 0
+        },
+        "shallowModule": {
+          "count": 0
         }
       }
     },
@@ -2261,6 +2358,9 @@
           }
         },
         "silentCatch": {
+          "count": 0
+        },
+        "shallowModule": {
           "count": 0
         }
       }
@@ -2331,11 +2431,14 @@
         },
         "silentCatch": {
           "count": 0
+        },
+        "shallowModule": {
+          "count": 1
         }
       }
     },
     "src/types.ts": {
-      "fileHash": "dbda9531efb75172fe7172113d408e38acafab9323d5c35bf1979b58805671e9",
+      "fileHash": "ab0192b610c390b9e22c7ef81232f70ede71c3b9bed789e7b0cd2a8cc5db3bb4",
       "metrics": {
         "cognitiveComplexity": {
           "max": 7,
@@ -2385,6 +2488,9 @@
         },
         "silentCatch": {
           "count": 0
+        },
+        "shallowModule": {
+          "count": 0
         }
       }
     },
@@ -2424,6 +2530,9 @@
           }
         },
         "silentCatch": {
+          "count": 0
+        },
+        "shallowModule": {
           "count": 0
         }
       }
@@ -2465,6 +2574,9 @@
         },
         "silentCatch": {
           "count": 0
+        },
+        "shallowModule": {
+          "count": 0
         }
       }
     },
@@ -2505,6 +2617,9 @@
         },
         "silentCatch": {
           "count": 0
+        },
+        "shallowModule": {
+          "count": 0
         }
       }
     },
@@ -2544,6 +2659,9 @@
           }
         },
         "silentCatch": {
+          "count": 0
+        },
+        "shallowModule": {
           "count": 0
         }
       }
@@ -2589,6 +2707,9 @@
         },
         "silentCatch": {
           "count": 0
+        },
+        "shallowModule": {
+          "count": 0
         }
       }
     },
@@ -2633,6 +2754,9 @@
         },
         "silentCatch": {
           "count": 0
+        },
+        "shallowModule": {
+          "count": 0
         }
       }
     },
@@ -2672,6 +2796,9 @@
           }
         },
         "silentCatch": {
+          "count": 0
+        },
+        "shallowModule": {
           "count": 0
         }
       }
@@ -2715,6 +2842,9 @@
         },
         "silentCatch": {
           "count": 0
+        },
+        "shallowModule": {
+          "count": 0
         }
       }
     },
@@ -2756,11 +2886,14 @@
         },
         "silentCatch": {
           "count": 0
+        },
+        "shallowModule": {
+          "count": 0
         }
       }
     },
     "tests/helpers.ts": {
-      "fileHash": "7c4e96d2746156927751a5d287455d94c92bd6c0327ab29cddae6042a54a9ccf",
+      "fileHash": "de8d22c7a7492e6760a05495211db8b7c177b15bde8c7e0c62ea662d49c198ca",
       "metrics": {
         "cognitiveComplexity": {
           "max": 1,
@@ -2772,11 +2905,11 @@
           }
         },
         "cyclomaticComplexity": {
-          "max": 10,
+          "max": 11,
           "perFunction": {
             "inputFor": 2,
             "inputFromSource": 2,
-            "baselineWith": 10
+            "baselineWith": 11
           }
         },
         "typeSafety": {
@@ -2788,11 +2921,11 @@
           "percent": 0
         },
         "functionLength": {
-          "max": 31,
+          "max": 32,
           "perFunction": {
             "inputFor": 17,
             "inputFromSource": 14,
-            "baselineWith": 31
+            "baselineWith": 32
           }
         },
         "parameterCount": {
@@ -2804,6 +2937,9 @@
           }
         },
         "silentCatch": {
+          "count": 0
+        },
+        "shallowModule": {
           "count": 0
         }
       }
@@ -2837,6 +2973,9 @@
         },
         "silentCatch": {
           "count": 0
+        },
+        "shallowModule": {
+          "count": 0
         }
       }
     },
@@ -2868,6 +3007,9 @@
           "perFunction": {}
         },
         "silentCatch": {
+          "count": 0
+        },
+        "shallowModule": {
           "count": 0
         }
       }
