@@ -62,5 +62,7 @@ export function applyTodoInjection(cwd: string, report: FileReport, attempt: str
 /** Stages files so the injected comments are part of the commit. */
 export function stageFiles(cwd: string, files: string[]): void {
   if (files.length === 0) return;
-  execaSync('git', ['add', ...files], { cwd, reject: false });
+  // `--` ends option parsing so a tracked path that looks like a flag
+  // (e.g. `-x`) is treated as a pathspec, not a git option.
+  execaSync('git', ['add', '--', ...files], { cwd, reject: false });
 }

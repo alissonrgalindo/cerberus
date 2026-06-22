@@ -2,7 +2,7 @@
 description: Show per-function complexity deltas between working tree and baseline
 ---
 
-Run `npx quality-gate diff` to see, for every drifted file, which **functions** moved and by how much.
+Run `pnpm exec cerberus diff` to see, for every drifted file, which **functions** moved and by how much.
 
 Use this before committing a refactor to confirm the change you intended is the change the gate sees. Output is grouped by file → function → delta.
 

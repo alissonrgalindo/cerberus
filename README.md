@@ -15,7 +15,7 @@ No LLM in the loop, just fast, repeatable analysis that an agent can't talk its 
 
 - **Deterministic, not vibes.** Real AST analysis and pattern matching, not an LLM grading an LLM. The same diff always gets the same verdict.
 - **Delta, not absolute.** Measures only the **files you touch** against a baseline, so legacy debt is grandfathered and you're never forced into a big refactor.
-- **Security tier is non-bypassable.** Secret leaks, injection sinks, unsafe migrations, and slopsquatted deps always run, even when quality checks are skipped.
+- **Security tier is non-bypassable.** Secret leaks, injection sinks, unsafe migrations, and slopsquatted deps always run, even when quality checks are skipped. Local hooks are advisory (`--no-verify` exists); the CI gate (`check --base`) is the hard enforcement point that `--no-verify` can't reach.
 - **Built for the agent loop.** Pairs with any push-time orchestrator: Cerberus is the verifier that decides pass/fail, the orchestrator drives the fix.
 
 > **Heads up:** formerly `code-quality-gate`. Renamed with full backward compatibility: the old binary (`quality-gate`), config (`.quality-gate.json`), presets (`@quality-gate/*`), suppress comments (`// quality-gate-allow:`), and `QUALITY_GATE_BYPASS` all still work as aliases.
@@ -43,19 +43,26 @@ Full list, limits, and design notes: **[docs/analyzers.md](./docs/analyzers.md)*
 
 ## Quickstart
 
+Cerberus is distributed as a **git dependency** (not on npm — the bare `cerberus` name there is an unrelated package), so install it from GitHub and run it through your package manager:
+
 ```bash
-# 1. Pick a preset
+# 1. Add Cerberus (prebuilt dist is committed — no build step)
+pnpm add -D github:alissonrgalindo/cerberus#v0.3.0
+
+# 2. Pick a preset
 echo '{ "extends": "@cerberus/nextjs" }' > .cerberus.json
 
-# 2. Snapshot the current state as the floor
-npx cerberus baseline
+# 3. Snapshot the current state as the floor
+pnpm exec cerberus baseline
 
-# 3. Install the git + Claude Code hooks
-npx cerberus install-hooks
+# 4. Install the git + Claude Code hooks
+pnpm exec cerberus install-hooks
 
-# 4. Commit as usual; the gate runs automatically
+# 5. Commit as usual; the gate runs automatically
 git commit -m "..."
 ```
+
+Or, in Claude Code, install the plugin instead: `/plugin install code-quality-gate`.
 
 ## Docs
 

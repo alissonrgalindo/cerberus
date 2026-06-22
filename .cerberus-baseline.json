@@ -1,0 +1,2876 @@
+{
+  "version": 1,
+  "generatedAt": "2026-06-22T19:01:54.823Z",
+  "files": {
+    "eslint.config.js": {
+      "fileHash": "ce2a45e7fad3936d27b4023caffd84202c95443996a3bca5a4e98a87cf9c7b67",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 0,
+          "perFunction": {}
+        },
+        "cyclomaticComplexity": {
+          "max": 0,
+          "perFunction": {}
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 0,
+          "perFunction": {}
+        },
+        "parameterCount": {
+          "max": 0,
+          "perFunction": {}
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "hooks/claude-pretooluse.mjs": {
+      "fileHash": "30ebae6506cbfa14e811ca88e7c4c5dc79a7c8760961c58c362bd8b09dcacc36",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 0,
+          "perFunction": {}
+        },
+        "cyclomaticComplexity": {
+          "max": 0,
+          "perFunction": {}
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 0,
+          "perFunction": {}
+        },
+        "parameterCount": {
+          "max": 0,
+          "perFunction": {}
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "src/analyzers/cognitive-complexity.ts": {
+      "fileHash": "a675764d3ec5fe49bb1efc1f3a74a54863c95178da47572acb46e68a128fa68f",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 12,
+          "perFunction": {
+            "type": 0,
+            "flattenScores": 11,
+            "measureCognitive": 0,
+            "analyzeCognitive": 12,
+            "<anonymous>:83": 0
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 8,
+          "perFunction": {
+            "flattenScores": 8,
+            "measureCognitive": 1,
+            "analyzeCognitive": 8,
+            "<anonymous>:83": 1
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 1
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 38,
+          "perFunction": {
+            "flattenScores": 13,
+            "measureCognitive": 6,
+            "analyzeCognitive": 38,
+            "<anonymous>:83": 1
+          }
+        },
+        "parameterCount": {
+          "max": 2,
+          "perFunction": {
+            "flattenScores": 2,
+            "measureCognitive": 2,
+            "analyzeCognitive": 1,
+            "<anonymous>:83": 2
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "src/analyzers/coverage-delta.ts": {
+      "fileHash": "2f69938b963251e281a1b450a704fddb6095afe7070f52e55d30e15738d2a554",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 9,
+          "perFunction": {
+            "hasVitest": 5,
+            "<anonymous>:17": 0,
+            "parseCoverageSummary": 5,
+            "compareCoverage": 9,
+            "collectCoverageForBaseline": 5,
+            "type": 0,
+            "analyzeCoverage": 4
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 6,
+          "perFunction": {
+            "hasVitest": 5,
+            "<anonymous>:17": 1,
+            "parseCoverageSummary": 4,
+            "compareCoverage": 6,
+            "collectCoverageForBaseline": 5,
+            "analyzeCoverage": 4
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 25,
+          "perFunction": {
+            "hasVitest": 16,
+            "<anonymous>:17": 1,
+            "parseCoverageSummary": 10,
+            "compareCoverage": 25,
+            "collectCoverageForBaseline": 17,
+            "analyzeCoverage": 16
+          }
+        },
+        "parameterCount": {
+          "max": 4,
+          "perFunction": {
+            "hasVitest": 1,
+            "<anonymous>:17": 1,
+            "parseCoverageSummary": 2,
+            "compareCoverage": 4,
+            "collectCoverageForBaseline": 2,
+            "analyzeCoverage": 4
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "src/analyzers/cyclomatic-complexity.ts": {
+      "fileHash": "efbd44ada916ebe37bed3535f7e46efc92c9eaf2cb7a0e7e6a082cc5fb04c6bc",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 11,
+          "perFunction": {
+            "isFunctionLike": 0,
+            "countDecisions": 7,
+            "<anonymous>:47": 7,
+            "functionName": 9,
+            "measureCyclomatic": 0,
+            "<anonymous>:86": 0,
+            "analyzeCyclomatic": 11
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 11,
+          "perFunction": {
+            "isFunctionLike": 1,
+            "countDecisions": 1,
+            "<anonymous>:47": 6,
+            "functionName": 11,
+            "measureCyclomatic": 1,
+            "<anonymous>:86": 1,
+            "analyzeCyclomatic": 7
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 31,
+          "perFunction": {
+            "isFunctionLike": 3,
+            "countDecisions": 16,
+            "<anonymous>:47": 12,
+            "functionName": 17,
+            "measureCyclomatic": 11,
+            "<anonymous>:86": 1,
+            "analyzeCyclomatic": 31
+          }
+        },
+        "parameterCount": {
+          "max": 2,
+          "perFunction": {
+            "isFunctionLike": 1,
+            "countDecisions": 1,
+            "<anonymous>:47": 2,
+            "functionName": 1,
+            "measureCyclomatic": 2,
+            "<anonymous>:86": 1,
+            "analyzeCyclomatic": 1
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "src/analyzers/duplication.ts": {
+      "fileHash": "cdc09784630e858c664ae76e20a6330ba218fab29ba7ed747d3f423c88a94352",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 13,
+          "perFunction": {
+            "jscpdBin": 9,
+            "JscpdDuplicate": 0,
+            "analyzeDuplication": 13,
+            "<anonymous>:47": 1
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 10,
+          "perFunction": {
+            "jscpdBin": 5,
+            "analyzeDuplication": 10,
+            "<anonymous>:47": 2
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 48,
+          "perFunction": {
+            "jscpdBin": 18,
+            "analyzeDuplication": 48,
+            "<anonymous>:47": 1
+          }
+        },
+        "parameterCount": {
+          "max": 3,
+          "perFunction": {
+            "jscpdBin": 0,
+            "analyzeDuplication": 3,
+            "<anonymous>:47": 1
+          }
+        },
+        "silentCatch": {
+          "count": 1
+        }
+      }
+    },
+    "src/analyzers/function-shape.ts": {
+      "fileHash": "ee211d4d024a72463ff6963ada17a2bcea9a1153926434a0b7d02ba62634fa35",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 23,
+          "perFunction": {
+            "type": 0,
+            "functionName": 7,
+            "measureFunctionShapes": 19,
+            "analyzeFunctionShape": 23
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 15,
+          "perFunction": {
+            "functionName": 8,
+            "measureFunctionShapes": 15,
+            "analyzeFunctionShape": 14
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 56,
+          "perFunction": {
+            "functionName": 9,
+            "measureFunctionShapes": 44,
+            "analyzeFunctionShape": 56
+          }
+        },
+        "parameterCount": {
+          "max": 2,
+          "perFunction": {
+            "functionName": 1,
+            "measureFunctionShapes": 2,
+            "analyzeFunctionShape": 1
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "src/analyzers/hallucinated-import.ts": {
+      "fileHash": "a949c5b4346b75ba7a8e61f7fa692e7721439a7eb45020645469d9e24442ab35",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 23,
+          "perFunction": {
+            "PkgJson": 0,
+            "packageNameFromSpecifier": 4,
+            "isLocalSpecifier": 5,
+            "isBuiltin": 1,
+            "collectDeclaredDeps": 23,
+            "Finding": 0,
+            "analyzeHallucinatedImport": 20,
+            "collect": 8,
+            "<anonymous>:146": 0
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 10,
+          "perFunction": {
+            "packageNameFromSpecifier": 4,
+            "isLocalSpecifier": 8,
+            "isBuiltin": 2,
+            "collectDeclaredDeps": 9,
+            "analyzeHallucinatedImport": 10,
+            "collect": 5,
+            "<anonymous>:146": 1
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 61,
+          "perFunction": {
+            "packageNameFromSpecifier": 7,
+            "isLocalSpecifier": 9,
+            "isBuiltin": 4,
+            "collectDeclaredDeps": 24,
+            "analyzeHallucinatedImport": 61,
+            "collect": 8,
+            "<anonymous>:146": 1
+          }
+        },
+        "parameterCount": {
+          "max": 2,
+          "perFunction": {
+            "packageNameFromSpecifier": 1,
+            "isLocalSpecifier": 1,
+            "isBuiltin": 1,
+            "collectDeclaredDeps": 1,
+            "analyzeHallucinatedImport": 1,
+            "collect": 2,
+            "<anonymous>:146": 1
+          }
+        },
+        "silentCatch": {
+          "count": 1
+        }
+      }
+    },
+    "src/analyzers/injection.ts": {
+      "fileHash": "90533d054ee2dcdeaa739a56cdf7d47c4251859c7ccc967b3d8f8f06dcf3d49b",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 17,
+          "perFunction": {
+            "Finding": 0,
+            "isInterpolatedTemplate": 0,
+            "isDynamicConcat": 14,
+            "hasString": 5,
+            "hasDynamic": 6,
+            "isDynamicString": 4,
+            "calleeName": 4,
+            "hasShellTrueOption": 9,
+            "looksSanitized": 1,
+            "checkCall": 13,
+            "checkNewFunction": 4,
+            "checkDangerousHtml": 17,
+            "isSuppressed": 1,
+            "findInjections": 3,
+            "<anonymous>:202": 0,
+            "analyzeInjection": 1,
+            "<anonymous>:215": 1
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 20,
+          "perFunction": {
+            "isInterpolatedTemplate": 1,
+            "isDynamicConcat": 4,
+            "hasString": 5,
+            "hasDynamic": 4,
+            "isDynamicString": 5,
+            "calleeName": 4,
+            "hasShellTrueOption": 7,
+            "looksSanitized": 2,
+            "checkCall": 20,
+            "checkNewFunction": 6,
+            "checkDangerousHtml": 14,
+            "isSuppressed": 2,
+            "findInjections": 4,
+            "<anonymous>:202": 1,
+            "analyzeInjection": 1,
+            "<anonymous>:215": 2
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 52,
+          "perFunction": {
+            "isInterpolatedTemplate": 3,
+            "isDynamicConcat": 13,
+            "hasString": 1,
+            "hasDynamic": 1,
+            "isDynamicString": 6,
+            "calleeName": 12,
+            "hasShellTrueOption": 15,
+            "looksSanitized": 6,
+            "checkCall": 52,
+            "checkNewFunction": 11,
+            "checkDangerousHtml": 20,
+            "isSuppressed": 4,
+            "findInjections": 17,
+            "<anonymous>:202": 1,
+            "analyzeInjection": 17,
+            "<anonymous>:215": 1
+          }
+        },
+        "parameterCount": {
+          "max": 2,
+          "perFunction": {
+            "isInterpolatedTemplate": 1,
+            "isDynamicConcat": 1,
+            "hasString": 1,
+            "hasDynamic": 1,
+            "isDynamicString": 1,
+            "calleeName": 1,
+            "hasShellTrueOption": 1,
+            "looksSanitized": 1,
+            "checkCall": 2,
+            "checkNewFunction": 2,
+            "checkDangerousHtml": 2,
+            "isSuppressed": 2,
+            "findInjections": 2,
+            "<anonymous>:202": 1,
+            "analyzeInjection": 1,
+            "<anonymous>:215": 1
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "src/analyzers/migration-safety.ts": {
+      "fileHash": "b49bc6a84ed830377e781d30a6b304f53cb5995885478e08383c2c377de5c237",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 13,
+          "perFunction": {
+            "Pattern": 0,
+            "describe": 0,
+            "findSetNotNullWithoutDefault": 5,
+            "lineOf": 4,
+            "readFromDisk": 2,
+            "analyzeMigrationSafety": 13,
+            "<anonymous>:121": 0
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 7,
+          "perFunction": {
+            "describe": 1,
+            "findSetNotNullWithoutDefault": 4,
+            "lineOf": 4,
+            "readFromDisk": 2,
+            "analyzeMigrationSafety": 7,
+            "<anonymous>:121": 1
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 42,
+          "perFunction": {
+            "describe": 1,
+            "findSetNotNullWithoutDefault": 18,
+            "lineOf": 8,
+            "readFromDisk": 7,
+            "analyzeMigrationSafety": 42,
+            "<anonymous>:121": 1
+          }
+        },
+        "parameterCount": {
+          "max": 3,
+          "perFunction": {
+            "describe": 1,
+            "findSetNotNullWithoutDefault": 1,
+            "lineOf": 2,
+            "readFromDisk": 1,
+            "analyzeMigrationSafety": 3,
+            "<anonymous>:121": 1
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "src/analyzers/n-plus-one-query.ts": {
+      "fileHash": "52d440f59baec0aa1b7769231d9c83486cc93b77305063faea8a8d86bdbf9c01",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 11,
+          "perFunction": {
+            "rootReceiver": 5,
+            "isDbAccess": 1,
+            "dbReceiverName": 1,
+            "isInsideLoop": 11,
+            "isArrayIteratorCall": 1,
+            "Finding": 0,
+            "findNPlusOne": 7,
+            "analyzeNPlusOneQuery": 0,
+            "<anonymous>:122": 0
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 7,
+          "perFunction": {
+            "rootReceiver": 4,
+            "isDbAccess": 2,
+            "dbReceiverName": 2,
+            "isInsideLoop": 7,
+            "isArrayIteratorCall": 2,
+            "findNPlusOne": 5,
+            "analyzeNPlusOneQuery": 1,
+            "<anonymous>:122": 1
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 21,
+          "perFunction": {
+            "rootReceiver": 16,
+            "isDbAccess": 4,
+            "dbReceiverName": 4,
+            "isInsideLoop": 21,
+            "isArrayIteratorCall": 5,
+            "findNPlusOne": 18,
+            "analyzeNPlusOneQuery": 16,
+            "<anonymous>:122": 1
+          }
+        },
+        "parameterCount": {
+          "max": 2,
+          "perFunction": {
+            "rootReceiver": 1,
+            "isDbAccess": 1,
+            "dbReceiverName": 1,
+            "isInsideLoop": 1,
+            "isArrayIteratorCall": 1,
+            "findNPlusOne": 2,
+            "analyzeNPlusOneQuery": 1,
+            "<anonymous>:122": 1
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "src/analyzers/new-dependency.ts": {
+      "fileHash": "686b588b20d8002aa9f3d434729c837f1ea04959a7612e982dbc698f0a1cd2bd",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 22,
+          "perFunction": {
+            "PkgJson": 0,
+            "depNames": 6,
+            "parsePkg": 2,
+            "headContent": 2,
+            "findLockfiles": 8,
+            "lockfileHasPackage": 0,
+            "<anonymous>:93": 0,
+            "readFromDisk": 2,
+            "analyzePyManifest": 10,
+            "<anonymous>:119": 0,
+            "<anonymous>:125": 2,
+            "<anonymous>:138": 0,
+            "analyzeNewDependency": 22,
+            "<anonymous>:163": 0,
+            "<anonymous>:164": 0,
+            "<anonymous>:178": 0,
+            "<anonymous>:184": 3,
+            "<anonymous>:193": 0
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 11,
+          "perFunction": {
+            "depNames": 4,
+            "parsePkg": 2,
+            "headContent": 2,
+            "findLockfiles": 5,
+            "lockfileHasPackage": 1,
+            "<anonymous>:93": 1,
+            "readFromDisk": 2,
+            "analyzePyManifest": 7,
+            "<anonymous>:119": 1,
+            "<anonymous>:125": 2,
+            "<anonymous>:138": 1,
+            "analyzeNewDependency": 11,
+            "<anonymous>:163": 1,
+            "<anonymous>:164": 1,
+            "<anonymous>:178": 1,
+            "<anonymous>:184": 2,
+            "<anonymous>:193": 1
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 51,
+          "perFunction": {
+            "depNames": 8,
+            "parsePkg": 7,
+            "headContent": 8,
+            "findLockfiles": 14,
+            "lockfileHasPackage": 9,
+            "<anonymous>:93": 1,
+            "readFromDisk": 7,
+            "analyzePyManifest": 46,
+            "<anonymous>:119": 1,
+            "<anonymous>:125": 7,
+            "<anonymous>:138": 1,
+            "analyzeNewDependency": 51,
+            "<anonymous>:163": 1,
+            "<anonymous>:164": 1,
+            "<anonymous>:178": 1,
+            "<anonymous>:184": 7,
+            "<anonymous>:193": 1
+          }
+        },
+        "parameterCount": {
+          "max": 3,
+          "perFunction": {
+            "depNames": 1,
+            "parsePkg": 1,
+            "headContent": 2,
+            "findLockfiles": 2,
+            "lockfileHasPackage": 2,
+            "<anonymous>:93": 1,
+            "readFromDisk": 1,
+            "analyzePyManifest": 3,
+            "<anonymous>:119": 1,
+            "<anonymous>:125": 1,
+            "<anonymous>:138": 1,
+            "analyzeNewDependency": 3,
+            "<anonymous>:163": 1,
+            "<anonymous>:164": 1,
+            "<anonymous>:178": 1,
+            "<anonymous>:184": 1,
+            "<anonymous>:193": 1
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "src/analyzers/python.ts": {
+      "fileHash": "a5bd110c7228acfbf7e16fb6c94f43b7b28982b2cd0b1cca9f49782270e47b71",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 34,
+          "perFunction": {
+            "SUPPRESS": 0,
+            "Line": 0,
+            "parseLines": 14,
+            "<anonymous>:27": 14,
+            "isBlankOrComment": 0,
+            "PyFinding": 0,
+            "findPySilentCatches": 25,
+            "<anonymous>:85": 0,
+            "<anonymous>:86": 1,
+            "analyzePySilentCatch": 0,
+            "<anonymous>:98": 0,
+            "isDynamicPyArg": 7,
+            "findPyInjections": 17,
+            "analyzePyInjection": 0,
+            "<anonymous>:189": 0,
+            "normalizePyName": 0,
+            "extractDeclaredPyDeps": 34,
+            "collectPyDeclaredDeps": 19,
+            "isLocalPyModule": 10,
+            "analyzePyHallucinatedImport": 24,
+            "check": 9,
+            "<anonymous>:378": 0
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 17,
+          "perFunction": {
+            "SUPPRESS": 1,
+            "parseLines": 1,
+            "<anonymous>:27": 8,
+            "isBlankOrComment": 1,
+            "findPySilentCatches": 11,
+            "<anonymous>:85": 1,
+            "<anonymous>:86": 2,
+            "analyzePySilentCatch": 1,
+            "<anonymous>:98": 1,
+            "isDynamicPyArg": 8,
+            "findPyInjections": 9,
+            "analyzePyInjection": 1,
+            "<anonymous>:189": 1,
+            "normalizePyName": 1,
+            "extractDeclaredPyDeps": 17,
+            "collectPyDeclaredDeps": 8,
+            "isLocalPyModule": 7,
+            "analyzePyHallucinatedImport": 9,
+            "check": 7,
+            "<anonymous>:378": 1
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 50,
+          "perFunction": {
+            "SUPPRESS": 1,
+            "parseLines": 20,
+            "<anonymous>:27": 18,
+            "isBlankOrComment": 3,
+            "findPySilentCatches": 34,
+            "<anonymous>:85": 1,
+            "<anonymous>:86": 1,
+            "analyzePySilentCatch": 11,
+            "<anonymous>:98": 1,
+            "isDynamicPyArg": 15,
+            "findPyInjections": 20,
+            "analyzePyInjection": 12,
+            "<anonymous>:189": 1,
+            "normalizePyName": 3,
+            "extractDeclaredPyDeps": 47,
+            "collectPyDeclaredDeps": 23,
+            "isLocalPyModule": 9,
+            "analyzePyHallucinatedImport": 50,
+            "check": 8,
+            "<anonymous>:378": 1
+          }
+        },
+        "parameterCount": {
+          "max": 3,
+          "perFunction": {
+            "SUPPRESS": 1,
+            "parseLines": 1,
+            "<anonymous>:27": 1,
+            "isBlankOrComment": 1,
+            "findPySilentCatches": 1,
+            "<anonymous>:85": 1,
+            "<anonymous>:86": 1,
+            "analyzePySilentCatch": 1,
+            "<anonymous>:98": 1,
+            "isDynamicPyArg": 1,
+            "findPyInjections": 1,
+            "analyzePyInjection": 1,
+            "<anonymous>:189": 1,
+            "normalizePyName": 1,
+            "extractDeclaredPyDeps": 2,
+            "collectPyDeclaredDeps": 1,
+            "isLocalPyModule": 3,
+            "analyzePyHallucinatedImport": 1,
+            "check": 2,
+            "<anonymous>:378": 1
+          }
+        },
+        "silentCatch": {
+          "count": 1
+        }
+      }
+    },
+    "src/analyzers/revalidate-required.ts": {
+      "fileHash": "84c534308072c557456c626c9fc7148e6127036de6ebb796eba0dd531739e017",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 14,
+          "perFunction": {
+            "isUseServerFile": 0,
+            "isFunctionLike": 0,
+            "isDrizzleMutationCall": 1,
+            "isRevalidatorCall": 2,
+            "functionName": 7,
+            "isExportedActionLike": 10,
+            "ActionAudit": 0,
+            "auditActions": 14,
+            "<anonymous>:90": 13,
+            "analyzeRevalidateRequired": 6
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 9,
+          "perFunction": {
+            "isUseServerFile": 1,
+            "isFunctionLike": 1,
+            "isDrizzleMutationCall": 2,
+            "isRevalidatorCall": 3,
+            "functionName": 8,
+            "isExportedActionLike": 9,
+            "auditActions": 2,
+            "<anonymous>:90": 6,
+            "analyzeRevalidateRequired": 5
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 26,
+          "perFunction": {
+            "isUseServerFile": 4,
+            "isFunctionLike": 3,
+            "isDrizzleMutationCall": 5,
+            "isRevalidatorCall": 6,
+            "functionName": 9,
+            "isExportedActionLike": 13,
+            "auditActions": 26,
+            "<anonymous>:90": 9,
+            "analyzeRevalidateRequired": 24
+          }
+        },
+        "parameterCount": {
+          "max": 2,
+          "perFunction": {
+            "isUseServerFile": 1,
+            "isFunctionLike": 1,
+            "isDrizzleMutationCall": 1,
+            "isRevalidatorCall": 1,
+            "functionName": 1,
+            "isExportedActionLike": 1,
+            "auditActions": 2,
+            "<anonymous>:90": 2,
+            "analyzeRevalidateRequired": 1
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "src/analyzers/secret-in-diff.ts": {
+      "fileHash": "7cba2596190e8c8e7904bbf42f12b725a59c6223532485650b72ac01a14cfa41",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 21,
+          "perFunction": {
+            "Pattern": 0,
+            "describe": 0,
+            "lineOf": 4,
+            "isSuppressed": 4,
+            "isEnvFile": 2,
+            "readFromDisk": 2,
+            "analyzeSecretInDiff": 21
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 10,
+          "perFunction": {
+            "describe": 1,
+            "lineOf": 4,
+            "isSuppressed": 5,
+            "isEnvFile": 3,
+            "readFromDisk": 2,
+            "analyzeSecretInDiff": 10
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 44,
+          "perFunction": {
+            "describe": 1,
+            "lineOf": 7,
+            "isSuppressed": 8,
+            "isEnvFile": 5,
+            "readFromDisk": 7,
+            "analyzeSecretInDiff": 44
+          }
+        },
+        "parameterCount": {
+          "max": 3,
+          "perFunction": {
+            "describe": 0,
+            "lineOf": 2,
+            "isSuppressed": 2,
+            "isEnvFile": 1,
+            "readFromDisk": 1,
+            "analyzeSecretInDiff": 3
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "src/analyzers/shallow-module.ts": {
+      "fileHash": "2c8e960a8b78c4a610e2f63f429595543f1da8a27afe36ef2bf85aea6e7e4d5c",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 25,
+          "perFunction": {
+            "Fn": 1,
+            "Finding": 0,
+            "isPureDelegationBody": 23,
+            "hasSuppression": 3,
+            "findShallowModules": 25,
+            "analyzeShallowModule": 0,
+            "<anonymous>:130": 0
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 18,
+          "perFunction": {
+            "isPureDelegationBody": 18,
+            "hasSuppression": 3,
+            "findShallowModules": 14,
+            "analyzeShallowModule": 1,
+            "<anonymous>:130": 1
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 43,
+          "perFunction": {
+            "isPureDelegationBody": 43,
+            "hasSuppression": 7,
+            "findShallowModules": 36,
+            "analyzeShallowModule": 16,
+            "<anonymous>:130": 1
+          }
+        },
+        "parameterCount": {
+          "max": 2,
+          "perFunction": {
+            "isPureDelegationBody": 1,
+            "hasSuppression": 1,
+            "findShallowModules": 2,
+            "analyzeShallowModule": 1,
+            "<anonymous>:130": 1
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "src/analyzers/silent-catch.ts": {
+      "fileHash": "54eeedd18f2bc5cbe72a9b7b15e61c18ef656e74889facf9d3535ad458c9c95d",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 4,
+          "perFunction": {
+            "Finding": 1,
+            "isConsoleCall": 3,
+            "statementIsConsoleCall": 1,
+            "classifyCatch": 3,
+            "findSilentCatches": 3,
+            "measureSilentCatch": 0,
+            "analyzeSilentCatch": 4,
+            "<anonymous>:73": 2
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 4,
+          "perFunction": {
+            "isConsoleCall": 4,
+            "statementIsConsoleCall": 2,
+            "classifyCatch": 3,
+            "findSilentCatches": 3,
+            "measureSilentCatch": 1,
+            "analyzeSilentCatch": 3,
+            "<anonymous>:73": 2
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 24,
+          "perFunction": {
+            "isConsoleCall": 7,
+            "statementIsConsoleCall": 4,
+            "classifyCatch": 13,
+            "findSilentCatches": 9,
+            "measureSilentCatch": 3,
+            "analyzeSilentCatch": 24,
+            "<anonymous>:73": 1
+          }
+        },
+        "parameterCount": {
+          "max": 2,
+          "perFunction": {
+            "isConsoleCall": 1,
+            "statementIsConsoleCall": 1,
+            "classifyCatch": 1,
+            "findSilentCatches": 2,
+            "measureSilentCatch": 2,
+            "analyzeSilentCatch": 1,
+            "<anonymous>:73": 1
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "src/analyzers/transaction-required.ts": {
+      "fileHash": "91beb62506f743da646d83041122cb276b03955a5a66f734ed6e10707d69d06f",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 18,
+          "perFunction": {
+            "isUseServerFile": 0,
+            "isDrizzleMutationCall": 1,
+            "isTransactionCall": 1,
+            "isFunctionLike": 0,
+            "functionName": 7,
+            "FunctionAudit": 0,
+            "auditFunctions": 18,
+            "<anonymous>:79": 14,
+            "hasTransactionAncestorUpTo": 6,
+            "hasTransactionAncestor": 5,
+            "analyzeTransactionRequired": 7
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 8,
+          "perFunction": {
+            "isUseServerFile": 1,
+            "isDrizzleMutationCall": 2,
+            "isTransactionCall": 2,
+            "isFunctionLike": 1,
+            "functionName": 8,
+            "auditFunctions": 4,
+            "<anonymous>:79": 7,
+            "hasTransactionAncestorUpTo": 5,
+            "hasTransactionAncestor": 4,
+            "analyzeTransactionRequired": 6
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 36,
+          "perFunction": {
+            "isUseServerFile": 5,
+            "isDrizzleMutationCall": 5,
+            "isTransactionCall": 5,
+            "isFunctionLike": 3,
+            "functionName": 9,
+            "auditFunctions": 36,
+            "<anonymous>:79": 16,
+            "hasTransactionAncestorUpTo": 8,
+            "hasTransactionAncestor": 8,
+            "analyzeTransactionRequired": 23
+          }
+        },
+        "parameterCount": {
+          "max": 2,
+          "perFunction": {
+            "isUseServerFile": 1,
+            "isDrizzleMutationCall": 1,
+            "isTransactionCall": 1,
+            "isFunctionLike": 1,
+            "functionName": 1,
+            "auditFunctions": 2,
+            "<anonymous>:79": 2,
+            "hasTransactionAncestorUpTo": 2,
+            "hasTransactionAncestor": 1,
+            "analyzeTransactionRequired": 1
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "src/analyzers/ts-project.ts": {
+      "fileHash": "ab4d8ae6df9d8a7fe967abe1bdaf96dd6609d4274bb327a844d4faaffeb91895",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 2,
+          "perFunction": {
+            "getProject": 1,
+            "createSourceFile": 2,
+            "resetSourceFileCache": 0
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 3,
+          "perFunction": {
+            "getProject": 2,
+            "createSourceFile": 3,
+            "resetSourceFileCache": 1
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 14,
+          "perFunction": {
+            "getProject": 14,
+            "createSourceFile": 9,
+            "resetSourceFileCache": 4
+          }
+        },
+        "parameterCount": {
+          "max": 2,
+          "perFunction": {
+            "getProject": 0,
+            "createSourceFile": 2,
+            "resetSourceFileCache": 0
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "src/analyzers/type-safety.ts": {
+      "fileHash": "771babff8c9d2a950715ac29dde8aa21a786668d858cfec95a013d93ec66ce9c",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 9,
+          "perFunction": {
+            "type": 0,
+            "measureTypeSafety": 7,
+            "<anonymous>:35": 2,
+            "fmtLines": 0,
+            "<anonymous>:50": 0,
+            "analyzeTypeSafety": 9
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 9,
+          "perFunction": {
+            "measureTypeSafety": 5,
+            "<anonymous>:35": 2,
+            "fmtLines": 1,
+            "<anonymous>:50": 1,
+            "analyzeTypeSafety": 9
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 72,
+          "perFunction": {
+            "measureTypeSafety": 31,
+            "<anonymous>:35": 3,
+            "fmtLines": 3,
+            "<anonymous>:50": 1,
+            "analyzeTypeSafety": 72
+          }
+        },
+        "parameterCount": {
+          "max": 2,
+          "perFunction": {
+            "measureTypeSafety": 2,
+            "<anonymous>:35": 2,
+            "fmtLines": 1,
+            "<anonymous>:50": 1,
+            "analyzeTypeSafety": 1
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "src/attempts.ts": {
+      "fileHash": "0d7d4308c2aeb980065ccff376db5079bc138c4c9ad9381836e734b32b836715",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 3,
+          "perFunction": {
+            "AttemptEntry": 0,
+            "Store": 0,
+            "hashFileSet": 0,
+            "load": 2,
+            "save": 0,
+            "prune": 3,
+            "incrementAttempt": 1,
+            "peekAttempt": 1
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 3,
+          "perFunction": {
+            "hashFileSet": 1,
+            "load": 3,
+            "save": 1,
+            "prune": 3,
+            "incrementAttempt": 2,
+            "peekAttempt": 2
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 9,
+          "perFunction": {
+            "hashFileSet": 6,
+            "load": 9,
+            "save": 3,
+            "prune": 7,
+            "incrementAttempt": 8,
+            "peekAttempt": 3
+          }
+        },
+        "parameterCount": {
+          "max": 3,
+          "perFunction": {
+            "hashFileSet": 1,
+            "load": 1,
+            "save": 2,
+            "prune": 2,
+            "incrementAttempt": 3,
+            "peekAttempt": 3
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "src/baseline.ts": {
+      "fileHash": "41f627ee0aeddd7658d86bcae17db9a6407f741750a3b72708d4057f78138b5a",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 6,
+          "perFunction": {
+            "loadBaseline": 6,
+            "saveBaseline": 1
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 5,
+          "perFunction": {
+            "loadBaseline": 5,
+            "saveBaseline": 2
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 15,
+          "perFunction": {
+            "loadBaseline": 15,
+            "saveBaseline": 10
+          }
+        },
+        "parameterCount": {
+          "max": 2,
+          "perFunction": {
+            "loadBaseline": 1,
+            "saveBaseline": 2
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "src/cli.ts": {
+      "fileHash": "eb4114e60b2d1e6c5d7c63166a3c86ac0a352e588929b029fcb6cbcd4c669f6e",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 48,
+          "perFunction": {
+            "CheckOutcome": 0,
+            "relKey": 0,
+            "toAbs": 1,
+            "isTsAnalyzable": 1,
+            "isMigrationSql": 0,
+            "isPyAnalyzable": 0,
+            "isAnalyzable": 1,
+            "bypassActive": 1,
+            "performCheck": 48,
+            "<anonymous>:106": 0,
+            "skipQuality": 1,
+            "<anonymous>:127": 0,
+            "readStagedOrDisk": 5,
+            "<anonymous>:148": 0,
+            "<anonymous>:182": 0,
+            "<anonymous>:188": 0,
+            "<anonymous>:211": 0,
+            "<anonymous>:220": 0,
+            "<anonymous>:227": 0,
+            "<anonymous>:229": 0,
+            "<anonymous>:236": 0,
+            "<anonymous>:238": 0,
+            "runCheck": 8,
+            "<anonymous>:272": 0,
+            "<anonymous>:273": 0,
+            "runClaudeHook": 9,
+            "<anonymous>:307": 0,
+            "<anonymous>:313": 0,
+            "<anonymous>:314": 0,
+            "<anonymous>:315": 0,
+            "<anonymous>:317": 0,
+            "runClaudePostEditHook": 7,
+            "<anonymous>:364": 0,
+            "<anonymous>:365": 0,
+            "<anonymous>:366": 0,
+            "runInstallHooks": 15,
+            "runBaseline": 10,
+            "runRefreshBaseline": 12,
+            "<anonymous>:461": 0,
+            "<anonymous>:453": 0,
+            "runAudit": 4,
+            "<anonymous>:503": 0,
+            "<anonymous>:506": 0,
+            "<anonymous>:507": 0,
+            "<anonymous>:518": 0,
+            "runDoctor": 35,
+            "line": 2,
+            "<anonymous>:608": 0,
+            "runDrift": 13,
+            "<anonymous>:660": 0,
+            "cell": 5,
+            "runDiff": 18,
+            "<anonymous>:719": 2,
+            "<anonymous>:731": 1,
+            "<anonymous>:744": 1,
+            "<anonymous>:745": 0,
+            "tag": 8,
+            "<anonymous>:792": 3,
+            "<anonymous>:805": 3,
+            "<anonymous>:811": 0,
+            "<anonymous>:816": 0,
+            "<anonymous>:817": 0,
+            "<anonymous>:822": 0,
+            "<anonymous>:837": 0,
+            "<anonymous>:842": 0,
+            "<anonymous>:847": 0,
+            "<anonymous>:852": 0,
+            "<anonymous>:853": 0,
+            "<anonymous>:858": 0,
+            "<anonymous>:859": 0,
+            "<anonymous>:864": 0,
+            "<anonymous>:868": 0,
+            "<anonymous>:873": 0,
+            "<anonymous>:878": 0,
+            "<anonymous>:880": 0,
+            "<anonymous>:881": 0
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 31,
+          "perFunction": {
+            "relKey": 1,
+            "toAbs": 2,
+            "isTsAnalyzable": 2,
+            "isMigrationSql": 1,
+            "isPyAnalyzable": 1,
+            "isAnalyzable": 3,
+            "bypassActive": 2,
+            "performCheck": 31,
+            "<anonymous>:106": 1,
+            "skipQuality": 2,
+            "<anonymous>:127": 1,
+            "readStagedOrDisk": 3,
+            "<anonymous>:148": 1,
+            "<anonymous>:182": 1,
+            "<anonymous>:188": 1,
+            "<anonymous>:211": 1,
+            "<anonymous>:220": 1,
+            "<anonymous>:227": 1,
+            "<anonymous>:229": 1,
+            "<anonymous>:236": 1,
+            "<anonymous>:238": 1,
+            "runCheck": 7,
+            "<anonymous>:272": 1,
+            "<anonymous>:273": 1,
+            "runClaudeHook": 13,
+            "<anonymous>:307": 1,
+            "<anonymous>:313": 1,
+            "<anonymous>:314": 1,
+            "<anonymous>:315": 1,
+            "<anonymous>:317": 1,
+            "runClaudePostEditHook": 8,
+            "<anonymous>:364": 1,
+            "<anonymous>:365": 1,
+            "<anonymous>:366": 1,
+            "runInstallHooks": 9,
+            "runBaseline": 7,
+            "runRefreshBaseline": 10,
+            "<anonymous>:453": 1,
+            "<anonymous>:461": 1,
+            "runAudit": 5,
+            "<anonymous>:503": 1,
+            "<anonymous>:506": 1,
+            "<anonymous>:507": 1,
+            "<anonymous>:518": 1,
+            "runDoctor": 20,
+            "line": 2,
+            "<anonymous>:608": 1,
+            "runDrift": 6,
+            "<anonymous>:660": 1,
+            "cell": 3,
+            "runDiff": 7,
+            "<anonymous>:719": 1,
+            "<anonymous>:731": 9,
+            "<anonymous>:744": 2,
+            "<anonymous>:745": 1,
+            "tag": 3,
+            "<anonymous>:792": 1,
+            "<anonymous>:805": 4,
+            "<anonymous>:811": 1,
+            "<anonymous>:816": 1,
+            "<anonymous>:817": 1,
+            "<anonymous>:822": 1,
+            "<anonymous>:837": 1,
+            "<anonymous>:842": 1,
+            "<anonymous>:847": 1,
+            "<anonymous>:852": 1,
+            "<anonymous>:853": 1,
+            "<anonymous>:858": 1,
+            "<anonymous>:859": 1,
+            "<anonymous>:864": 1,
+            "<anonymous>:868": 1,
+            "<anonymous>:873": 1,
+            "<anonymous>:878": 1,
+            "<anonymous>:880": 1,
+            "<anonymous>:881": 1
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 157,
+          "perFunction": {
+            "relKey": 3,
+            "toAbs": 3,
+            "isTsAnalyzable": 3,
+            "isMigrationSql": 3,
+            "isPyAnalyzable": 3,
+            "isAnalyzable": 3,
+            "bypassActive": 4,
+            "performCheck": 157,
+            "<anonymous>:106": 1,
+            "skipQuality": 4,
+            "<anonymous>:127": 1,
+            "readStagedOrDisk": 9,
+            "<anonymous>:148": 1,
+            "<anonymous>:182": 1,
+            "<anonymous>:188": 1,
+            "<anonymous>:211": 1,
+            "<anonymous>:220": 1,
+            "<anonymous>:227": 1,
+            "<anonymous>:229": 1,
+            "<anonymous>:236": 1,
+            "<anonymous>:238": 1,
+            "runCheck": 25,
+            "<anonymous>:272": 1,
+            "<anonymous>:273": 1,
+            "runClaudeHook": 48,
+            "<anonymous>:307": 1,
+            "<anonymous>:313": 1,
+            "<anonymous>:314": 1,
+            "<anonymous>:315": 1,
+            "<anonymous>:317": 1,
+            "runClaudePostEditHook": 35,
+            "<anonymous>:364": 1,
+            "<anonymous>:365": 1,
+            "<anonymous>:366": 1,
+            "runInstallHooks": 35,
+            "runBaseline": 33,
+            "runRefreshBaseline": 48,
+            "<anonymous>:453": 1,
+            "<anonymous>:461": 1,
+            "runAudit": 51,
+            "<anonymous>:503": 14,
+            "<anonymous>:506": 1,
+            "<anonymous>:507": 1,
+            "<anonymous>:518": 1,
+            "runDoctor": 100,
+            "line": 4,
+            "<anonymous>:608": 1,
+            "runDrift": 59,
+            "<anonymous>:660": 1,
+            "cell": 4,
+            "runDiff": 76,
+            "<anonymous>:719": 29,
+            "<anonymous>:731": 1,
+            "<anonymous>:744": 1,
+            "<anonymous>:745": 1,
+            "tag": 5,
+            "<anonymous>:792": 1,
+            "<anonymous>:805": 6,
+            "<anonymous>:811": 1,
+            "<anonymous>:816": 1,
+            "<anonymous>:817": 1,
+            "<anonymous>:822": 1,
+            "<anonymous>:837": 1,
+            "<anonymous>:842": 1,
+            "<anonymous>:847": 1,
+            "<anonymous>:852": 1,
+            "<anonymous>:853": 1,
+            "<anonymous>:858": 1,
+            "<anonymous>:859": 1,
+            "<anonymous>:864": 1,
+            "<anonymous>:868": 1,
+            "<anonymous>:873": 1,
+            "<anonymous>:878": 1,
+            "<anonymous>:880": 1,
+            "<anonymous>:881": 1
+          }
+        },
+        "parameterCount": {
+          "max": 4,
+          "perFunction": {
+            "relKey": 2,
+            "toAbs": 2,
+            "isTsAnalyzable": 1,
+            "isMigrationSql": 1,
+            "isPyAnalyzable": 1,
+            "isAnalyzable": 1,
+            "bypassActive": 0,
+            "performCheck": 1,
+            "<anonymous>:106": 1,
+            "skipQuality": 1,
+            "<anonymous>:127": 1,
+            "readStagedOrDisk": 1,
+            "<anonymous>:148": 1,
+            "<anonymous>:182": 1,
+            "<anonymous>:188": 1,
+            "<anonymous>:211": 1,
+            "<anonymous>:220": 1,
+            "<anonymous>:227": 1,
+            "<anonymous>:229": 1,
+            "<anonymous>:236": 1,
+            "<anonymous>:238": 1,
+            "runCheck": 1,
+            "<anonymous>:272": 1,
+            "<anonymous>:273": 1,
+            "runClaudeHook": 0,
+            "<anonymous>:307": 1,
+            "<anonymous>:313": 1,
+            "<anonymous>:314": 1,
+            "<anonymous>:315": 1,
+            "<anonymous>:317": 1,
+            "runClaudePostEditHook": 0,
+            "<anonymous>:364": 1,
+            "<anonymous>:365": 1,
+            "<anonymous>:366": 1,
+            "runInstallHooks": 1,
+            "runBaseline": 1,
+            "runRefreshBaseline": 1,
+            "<anonymous>:453": 1,
+            "<anonymous>:461": 1,
+            "runAudit": 1,
+            "<anonymous>:503": 1,
+            "<anonymous>:506": 2,
+            "<anonymous>:507": 2,
+            "<anonymous>:518": 2,
+            "runDoctor": 1,
+            "line": 2,
+            "<anonymous>:608": 1,
+            "runDrift": 1,
+            "<anonymous>:660": 1,
+            "cell": 2,
+            "runDiff": 1,
+            "<anonymous>:719": 1,
+            "<anonymous>:731": 1,
+            "<anonymous>:744": 1,
+            "<anonymous>:745": 2,
+            "tag": 4,
+            "<anonymous>:792": 1,
+            "<anonymous>:805": 1,
+            "<anonymous>:811": 1,
+            "<anonymous>:816": 1,
+            "<anonymous>:817": 1,
+            "<anonymous>:822": 1,
+            "<anonymous>:837": 1,
+            "<anonymous>:842": 1,
+            "<anonymous>:847": 1,
+            "<anonymous>:852": 1,
+            "<anonymous>:853": 1,
+            "<anonymous>:858": 1,
+            "<anonymous>:859": 1,
+            "<anonymous>:864": 1,
+            "<anonymous>:868": 1,
+            "<anonymous>:873": 1,
+            "<anonymous>:878": 1,
+            "<anonymous>:880": 0,
+            "<anonymous>:881": 0
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "src/commit-detect.ts": {
+      "fileHash": "b89c18f16ca289033aa5821ff41bac8e92d3ca44bfc0c26ec6afb6253fff5681",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 11,
+          "perFunction": {
+            "tokenIsGit": 2,
+            "segmentIsCommit": 11,
+            "isGitCommit": 0
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 7,
+          "perFunction": {
+            "tokenIsGit": 3,
+            "segmentIsCommit": 7,
+            "isGitCommit": 1
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 17,
+          "perFunction": {
+            "tokenIsGit": 5,
+            "segmentIsCommit": 17,
+            "isGitCommit": 3
+          }
+        },
+        "parameterCount": {
+          "max": 1,
+          "perFunction": {
+            "tokenIsGit": 1,
+            "segmentIsCommit": 1,
+            "isGitCommit": 1
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "src/config.ts": {
+      "fileHash": "752fd3df832bd56da5843c0e25692ca864d19ce0564f75fea0c3cef0389193fd",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 8,
+          "perFunction": {
+            "PartialConfig": 1,
+            "merge": 1,
+            "loadConfig": 8
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 7,
+          "perFunction": {
+            "merge": 3,
+            "loadConfig": 7
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 29,
+          "perFunction": {
+            "merge": 9,
+            "loadConfig": 29
+          }
+        },
+        "parameterCount": {
+          "max": 2,
+          "perFunction": {
+            "merge": 2,
+            "loadConfig": 1
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "src/defaults.ts": {
+      "fileHash": "610e366874a688d43124e53619e1d607daadbb1291e005553d3614ed0428081b",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 0,
+          "perFunction": {
+            "defaultConfig": 0
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 1,
+          "perFunction": {
+            "defaultConfig": 1
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 50,
+          "perFunction": {
+            "defaultConfig": 50
+          }
+        },
+        "parameterCount": {
+          "max": 0,
+          "perFunction": {
+            "defaultConfig": 0
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "src/drift.ts": {
+      "fileHash": "929d72e562a76bc9f93e47ef32d517421a27e3655e0d0a1125c540f09c24c28f",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 11,
+          "perFunction": {
+            "type": 0,
+            "listDrift": 11,
+            "<anonymous>:52": 0
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 7,
+          "perFunction": {
+            "listDrift": 7,
+            "<anonymous>:52": 1
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 22,
+          "perFunction": {
+            "listDrift": 22,
+            "<anonymous>:52": 1
+          }
+        },
+        "parameterCount": {
+          "max": 2,
+          "perFunction": {
+            "listDrift": 1,
+            "<anonymous>:52": 2
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "src/engine.ts": {
+      "fileHash": "d3107a3bc9a38895c765b9500c4ca9f245852ceaca4cdc9c540aa8cc8ecffd06",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 15,
+          "perFunction": {
+            "type": 0,
+            "hashContent": 0,
+            "maxScore": 0,
+            "<anonymous>:57": 0,
+            "analyzeFile": 15,
+            "<anonymous>:75": 0,
+            "<anonymous>:95": 3,
+            "<anonymous>:104": 0,
+            "<anonymous>:105": 0,
+            "analyzePythonFile": 3,
+            "<anonymous>:132": 0,
+            "<anonymous>:133": 0,
+            "computeFileBaseline": 12
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 13,
+          "perFunction": {
+            "hashContent": 1,
+            "maxScore": 1,
+            "<anonymous>:57": 1,
+            "analyzeFile": 13,
+            "<anonymous>:75": 1,
+            "<anonymous>:95": 2,
+            "<anonymous>:104": 1,
+            "<anonymous>:105": 1,
+            "analyzePythonFile": 4,
+            "<anonymous>:132": 1,
+            "<anonymous>:133": 1,
+            "computeFileBaseline": 7
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 42,
+          "perFunction": {
+            "hashContent": 3,
+            "maxScore": 3,
+            "<anonymous>:57": 1,
+            "analyzeFile": 42,
+            "<anonymous>:75": 1,
+            "<anonymous>:95": 1,
+            "<anonymous>:104": 1,
+            "<anonymous>:105": 1,
+            "analyzePythonFile": 18,
+            "<anonymous>:132": 1,
+            "<anonymous>:133": 1,
+            "computeFileBaseline": 40
+          }
+        },
+        "parameterCount": {
+          "max": 4,
+          "perFunction": {
+            "hashContent": 1,
+            "maxScore": 1,
+            "<anonymous>:57": 2,
+            "analyzeFile": 4,
+            "<anonymous>:75": 1,
+            "<anonymous>:95": 1,
+            "<anonymous>:104": 1,
+            "<anonymous>:105": 1,
+            "analyzePythonFile": 3,
+            "<anonymous>:132": 1,
+            "<anonymous>:133": 1,
+            "computeFileBaseline": 2
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "src/files.ts": {
+      "fileHash": "11650e23c9b33bc699856295e5d466dd9e6e873b0c8552c0dede45660b40ea75",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 16,
+          "perFunction": {
+            "toPosix": 0,
+            "isBuildArtifactPath": 0,
+            "<anonymous>:24": 0,
+            "makeIgnoreMatcher": 0,
+            "<anonymous>:30": 0,
+            "walkTsFiles": 16,
+            "walk": 16
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 8,
+          "perFunction": {
+            "toPosix": 1,
+            "isBuildArtifactPath": 1,
+            "<anonymous>:24": 1,
+            "makeIgnoreMatcher": 1,
+            "<anonymous>:30": 1,
+            "walkTsFiles": 1,
+            "walk": 8
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 20,
+          "perFunction": {
+            "toPosix": 3,
+            "isBuildArtifactPath": 3,
+            "<anonymous>:24": 1,
+            "makeIgnoreMatcher": 4,
+            "<anonymous>:30": 1,
+            "walkTsFiles": 20,
+            "walk": 12
+          }
+        },
+        "parameterCount": {
+          "max": 2,
+          "perFunction": {
+            "toPosix": 1,
+            "isBuildArtifactPath": 1,
+            "<anonymous>:24": 1,
+            "makeIgnoreMatcher": 1,
+            "<anonymous>:30": 1,
+            "walkTsFiles": 2,
+            "walk": 1
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "src/git-diff.ts": {
+      "fileHash": "20f605aa82ddd36f593826e300c8a7478bb43a72e32d2ec0fd721b40a1f032ef",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 2,
+          "perFunction": {
+            "getStagedFiles": 1,
+            "<anonymous>:12": 0,
+            "getChangedFiles": 1,
+            "<anonymous>:32": 0,
+            "getFileContent": 0,
+            "getStagedContent": 2
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 2,
+          "perFunction": {
+            "getStagedFiles": 2,
+            "<anonymous>:12": 1,
+            "getChangedFiles": 2,
+            "<anonymous>:32": 1,
+            "getFileContent": 1,
+            "getStagedContent": 2
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 15,
+          "perFunction": {
+            "getStagedFiles": 13,
+            "<anonymous>:12": 1,
+            "getChangedFiles": 15,
+            "<anonymous>:32": 1,
+            "getFileContent": 3,
+            "getStagedContent": 8
+          }
+        },
+        "parameterCount": {
+          "max": 3,
+          "perFunction": {
+            "getStagedFiles": 2,
+            "<anonymous>:12": 1,
+            "getChangedFiles": 3,
+            "<anonymous>:32": 1,
+            "getFileContent": 1,
+            "getStagedContent": 2
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "src/injector.ts": {
+      "fileHash": "0b354fcf7a1c0d1ce05494ae0456a79f2fdf1685bcb4514192058bc932deb8ee",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 9,
+          "perFunction": {
+            "buildTodoComment": 0,
+            "targetLine": 2,
+            "injectTodos": 9,
+            "<anonymous>:38": 0,
+            "<anonymous>:44": 0,
+            "<anonymous>:45": 0,
+            "applyTodoInjection": 1,
+            "stageFiles": 1
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 8,
+          "perFunction": {
+            "buildTodoComment": 1,
+            "targetLine": 3,
+            "injectTodos": 8,
+            "<anonymous>:38": 1,
+            "<anonymous>:44": 1,
+            "<anonymous>:45": 1,
+            "applyTodoInjection": 2,
+            "stageFiles": 2
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 25,
+          "perFunction": {
+            "buildTodoComment": 3,
+            "targetLine": 7,
+            "injectTodos": 25,
+            "<anonymous>:38": 1,
+            "<anonymous>:44": 1,
+            "<anonymous>:45": 1,
+            "applyTodoInjection": 8,
+            "stageFiles": 6
+          }
+        },
+        "parameterCount": {
+          "max": 3,
+          "perFunction": {
+            "buildTodoComment": 2,
+            "targetLine": 1,
+            "injectTodos": 3,
+            "<anonymous>:38": 2,
+            "<anonymous>:44": 1,
+            "<anonymous>:45": 1,
+            "applyTodoInjection": 3,
+            "stageFiles": 2
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "src/install-hooks.ts": {
+      "fileHash": "3ca1b81fb60869e6ec4fed7455d23793505158f415a2f19f4596cebd09e0ec83",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 14,
+          "perFunction": {
+            "gitHooksDir": 2,
+            "cliInvocation": 0,
+            "type": 0,
+            "isHuskyRepo": 1,
+            "export": 1,
+            "detectInstalledHook": 4,
+            "installHuskyHook": 14,
+            "installGitHook": 5,
+            "registerClaudeHook": 8
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 8,
+          "perFunction": {
+            "gitHooksDir": 2,
+            "cliInvocation": 1,
+            "isHuskyRepo": 2,
+            "detectInstalledHook": 5,
+            "installHuskyHook": 8,
+            "installGitHook": 5,
+            "registerClaudeHook": 8
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 38,
+          "perFunction": {
+            "gitHooksDir": 8,
+            "cliInvocation": 3,
+            "isHuskyRepo": 3,
+            "detectInstalledHook": 13,
+            "installHuskyHook": 27,
+            "installGitHook": 32,
+            "registerClaudeHook": 38
+          }
+        },
+        "parameterCount": {
+          "max": 1,
+          "perFunction": {
+            "gitHooksDir": 1,
+            "cliInvocation": 0,
+            "isHuskyRepo": 1,
+            "detectInstalledHook": 1,
+            "installHuskyHook": 1,
+            "installGitHook": 1,
+            "registerClaudeHook": 1
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "src/reporter.ts": {
+      "fileHash": "5b6f00780cb10b4ab92ddca734571fec56348111db2b2ec480a129080c30c0de",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 8,
+          "perFunction": {
+            "type": 1,
+            "reportJson": 0,
+            "lineFromLocation": 1,
+            "escapeData": 0,
+            "escapeProperty": 0,
+            "reportGithub": 7,
+            "reportHuman": 8,
+            "<anonymous>:59": 0,
+            "writeFileBlock": 5
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 8,
+          "perFunction": {
+            "reportJson": 1,
+            "lineFromLocation": 2,
+            "escapeData": 1,
+            "escapeProperty": 1,
+            "reportGithub": 5,
+            "reportHuman": 8,
+            "<anonymous>:59": 1,
+            "writeFileBlock": 4
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 28,
+          "perFunction": {
+            "reportJson": 3,
+            "lineFromLocation": 4,
+            "escapeData": 3,
+            "escapeProperty": 3,
+            "reportGithub": 19,
+            "reportHuman": 28,
+            "<anonymous>:59": 1,
+            "writeFileBlock": 12
+          }
+        },
+        "parameterCount": {
+          "max": 1,
+          "perFunction": {
+            "reportJson": 1,
+            "lineFromLocation": 1,
+            "escapeData": 1,
+            "escapeProperty": 1,
+            "reportGithub": 1,
+            "reportHuman": 1,
+            "<anonymous>:59": 1,
+            "writeFileBlock": 1
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "src/types.ts": {
+      "fileHash": "dbda9531efb75172fe7172113d408e38acafab9323d5c35bf1979b58805671e9",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 7,
+          "perFunction": {
+            "type": 0,
+            "isSecurityViolation": 1,
+            "export": 0,
+            "baselineKey": 1,
+            "functionBaselineFloor": 3,
+            "fileTypeFromPath": 7
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 8,
+          "perFunction": {
+            "isSecurityViolation": 2,
+            "baselineKey": 2,
+            "functionBaselineFloor": 3,
+            "fileTypeFromPath": 8
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 10,
+          "perFunction": {
+            "isSecurityViolation": 3,
+            "baselineKey": 3,
+            "functionBaselineFloor": 3,
+            "fileTypeFromPath": 10
+          }
+        },
+        "parameterCount": {
+          "max": 4,
+          "perFunction": {
+            "isSecurityViolation": 1,
+            "baselineKey": 1,
+            "functionBaselineFloor": 4,
+            "fileTypeFromPath": 1
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "tests/fixtures/complex.js": {
+      "fileHash": "192c799dc906443fa236b296752dfa09dd39b0c0758b4694c72f1a32baaef10b",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 21,
+          "perFunction": {
+            "deeplyNested": 21
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 7,
+          "perFunction": {
+            "deeplyNested": 7
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 16,
+          "perFunction": {
+            "deeplyNested": 16
+          }
+        },
+        "parameterCount": {
+          "max": 1,
+          "perFunction": {
+            "deeplyNested": 1
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "tests/fixtures/complex.ts": {
+      "fileHash": "0faa78d6e8666098f3e987c8e3b97bb75b65a644969ae2f6afa81245f3d1b4ef",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 21,
+          "perFunction": {
+            "deeplyNested": 21
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 7,
+          "perFunction": {
+            "deeplyNested": 7
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 16,
+          "perFunction": {
+            "deeplyNested": 16
+          }
+        },
+        "parameterCount": {
+          "max": 1,
+          "perFunction": {
+            "deeplyNested": 1
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "tests/fixtures/jsx-complex.tsx": {
+      "fileHash": "703fee76ff7cbc30cb5178b50bb07eb9d2a852300425adcccd8fff05af40aba7",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 25,
+          "perFunction": {
+            "Dashboard": 25
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 12,
+          "perFunction": {
+            "Dashboard": 12
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 27,
+          "perFunction": {
+            "Dashboard": 27
+          }
+        },
+        "parameterCount": {
+          "max": 1,
+          "perFunction": {
+            "Dashboard": 1
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "tests/fixtures/jsx-simple.tsx": {
+      "fileHash": "3a01fee3933a170d9d23d099e690612e82cb97d99c0df435cf6126a2b61a5e24",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 16,
+          "perFunction": {
+            "Panel": 16
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 10,
+          "perFunction": {
+            "Panel": 10
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 30,
+          "perFunction": {
+            "Panel": 30
+          }
+        },
+        "parameterCount": {
+          "max": 1,
+          "perFunction": {
+            "Panel": 1
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "tests/fixtures/simple.js": {
+      "fileHash": "c1e8963d34e2d1cb42662d823a976eab7baeca2dcbd7578e7aac281d08781310",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 0,
+          "perFunction": {
+            "add": 0,
+            "greet": 0
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 1,
+          "perFunction": {
+            "add": 1,
+            "greet": 1
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 3,
+          "perFunction": {
+            "add": 3,
+            "greet": 3
+          }
+        },
+        "parameterCount": {
+          "max": 2,
+          "perFunction": {
+            "add": 2,
+            "greet": 1
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "tests/fixtures/simple.ts": {
+      "fileHash": "6f979dc4321265d6d438ce5b3d6dd2af267ae71ee573fa7f34ef83dcda8c8847",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 0,
+          "perFunction": {
+            "add": 0,
+            "greet": 0
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 1,
+          "perFunction": {
+            "add": 1,
+            "greet": 1
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 3,
+          "perFunction": {
+            "add": 3,
+            "greet": 3
+          }
+        },
+        "parameterCount": {
+          "max": 2,
+          "perFunction": {
+            "add": 2,
+            "greet": 1
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "tests/fixtures/with-any.ts": {
+      "fileHash": "8e3654b254001b65262d373d802195805f12180a48989e20562820b4701aace6",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 0,
+          "perFunction": {
+            "takesAny": 0
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 1,
+          "perFunction": {
+            "takesAny": 1
+          }
+        },
+        "typeSafety": {
+          "anyCount": 3,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 5,
+          "perFunction": {
+            "takesAny": 5
+          }
+        },
+        "parameterCount": {
+          "max": 1,
+          "perFunction": {
+            "takesAny": 1
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "tests/fixtures/with-suppression.ts": {
+      "fileHash": "e1724d5032b5df125075cc724f7907272d8b685975175ceba5dd0e315569a6e8",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 0,
+          "perFunction": {
+            "doesNotExist": 0,
+            "risky": 0
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 1,
+          "perFunction": {
+            "doesNotExist": 1,
+            "risky": 1
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 2,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 7,
+          "perFunction": {
+            "risky": 7
+          }
+        },
+        "parameterCount": {
+          "max": 0,
+          "perFunction": {
+            "risky": 0
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "tests/fixtures/with-unknown-cast.ts": {
+      "fileHash": "02ae4794eb399908eb80e06f71a84ab9028bc142d4eae579b98458eea18f0d59",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 0,
+          "perFunction": {
+            "User": 0,
+            "coerce": 0
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 1,
+          "perFunction": {
+            "coerce": 1
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 1
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 3,
+          "perFunction": {
+            "coerce": 3
+          }
+        },
+        "parameterCount": {
+          "max": 1,
+          "perFunction": {
+            "coerce": 1
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "tests/helpers.ts": {
+      "fileHash": "7c4e96d2746156927751a5d287455d94c92bd6c0327ab29cddae6042a54a9ccf",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 1,
+          "perFunction": {
+            "InputOverrides": 0,
+            "inputFor": 1,
+            "inputFromSource": 1,
+            "baselineWith": 1
+          }
+        },
+        "cyclomaticComplexity": {
+          "max": 10,
+          "perFunction": {
+            "inputFor": 2,
+            "inputFromSource": 2,
+            "baselineWith": 10
+          }
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 31,
+          "perFunction": {
+            "inputFor": 17,
+            "inputFromSource": 14,
+            "baselineWith": 31
+          }
+        },
+        "parameterCount": {
+          "max": 3,
+          "perFunction": {
+            "inputFor": 2,
+            "inputFromSource": 3,
+            "baselineWith": 1
+          }
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "tsup.config.bundled_p262ab0xnf.mjs": {
+      "fileHash": "64426e8a07982e65076ea3e7fa2365fe3280147902b532b87705f991f5e82289",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 0,
+          "perFunction": {}
+        },
+        "cyclomaticComplexity": {
+          "max": 0,
+          "perFunction": {}
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 0,
+          "perFunction": {}
+        },
+        "parameterCount": {
+          "max": 0,
+          "perFunction": {}
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    },
+    "tsup.config.ts": {
+      "fileHash": "dbf6d5246946805f66776e444ab8db6274667997c01011ca4e1911ed858afd25",
+      "metrics": {
+        "cognitiveComplexity": {
+          "max": 0,
+          "perFunction": {}
+        },
+        "cyclomaticComplexity": {
+          "max": 0,
+          "perFunction": {}
+        },
+        "typeSafety": {
+          "anyCount": 0,
+          "tsIgnoreCount": 0,
+          "asUnknownAsCount": 0
+        },
+        "coverage": {
+          "percent": 0
+        },
+        "functionLength": {
+          "max": 0,
+          "perFunction": {}
+        },
+        "parameterCount": {
+          "max": 0,
+          "perFunction": {}
+        },
+        "silentCatch": {
+          "count": 0
+        }
+      }
+    }
+  }
+}

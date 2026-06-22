@@ -134,7 +134,20 @@ function isEnvFile(name: string): boolean {
   return true;
 }
 
-export function analyzeSecretInDiff(files: string[], cwd: string): SetViolation[] {
+/** Default content source: the working tree. Pre-commit passes a staged-blob reader. */
+function readFromDisk(abs: string): string | null {
+  try {
+    return readFileSync(abs, 'utf8');
+  } catch {
+    return null;
+  }
+}
+
+export function analyzeSecretInDiff(
+  files: string[],
+  cwd: string,
+  readContent: (abs: string) => string | null = readFromDisk,
+): SetViolation[] {
   const out: SetViolation[] = [];
 
   for (const abs of files) {
@@ -154,12 +167,8 @@ export function analyzeSecretInDiff(files: string[], cwd: string): SetViolation[
       continue;
     }
 
-    let content: string;
-    try {
-      content = readFileSync(abs, 'utf8');
-    } catch {
-      continue;
-    }
+    const content = readContent(abs);
+    if (content === null) continue;
 
     for (const pattern of PATTERNS) {
       pattern.regex.lastIndex = 0;

@@ -29,7 +29,13 @@ describe('engine', () => {
   });
 
   it('only runs implemented analyzers (no coverage/duplication crash)', async () => {
-    const config = defaultConfig();
+    // coverage + duplication are set-level analyzers; even when they appear in
+    // preCommit.enabled, the per-file analyzeFile must skip them, not crash.
+    const base = defaultConfig();
+    const config = {
+      ...base,
+      preCommit: { ...base.preCommit, enabled: [...base.preCommit.enabled, 'coverage', 'duplication'] as typeof base.preCommit.enabled },
+    };
     expect(config.preCommit.enabled).toContain('coverage');
     const report = await analyzeFile('clean.ts', 'export const x = 1;\n', config);
     expect(report.passed).toBe(true);

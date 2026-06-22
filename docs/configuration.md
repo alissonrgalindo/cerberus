@@ -17,6 +17,8 @@ Extend a preset and override only what you need:
 
 Presets: `@cerberus/nextjs`, `@cerberus/monorepo-turborepo`, `@cerberus/node-cli` (legacy `@quality-gate/*` aliases still resolve).
 
+`ignore` is a **quality knob only**: matched files are dropped from the baseline and from every quality analyzer (complexity, type-safety, duplication, coverage, shape, …). The **security tier still runs on ignored files** — `secret-in-diff`, `injection`, `migration-safety`, and `new-dependency` cannot be silenced by widening `ignore`, the same way they can't be disabled by editing `preCommit.enabled` (see [the security tier](./ci-and-languages.md#security-tier-non-bypassable)).
+
 ## Commands
 
 | Command | Purpose |

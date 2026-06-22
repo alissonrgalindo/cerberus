@@ -1,6 +1,6 @@
 # Self-CI for the quality-gate repo: tests, typecheck, and the gate run on
 # every PR. Consumers: copy the "gate" job and replace the build steps with
-# `npx quality-gate check --base origin/${{ github.base_ref }}`.
+# `pnpm exec cerberus check --base "origin/${{ github.base_ref }}"`.
 name: quality-gate
 
 on:

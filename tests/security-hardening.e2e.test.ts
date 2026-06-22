@@ -27,8 +27,11 @@ function initRepo(dir: string): void {
   git(dir, ['config', 'user.name', 'test']);
 }
 
+// Assembled at runtime so this test file doesn't itself trip secret-in-diff
+// when Cerberus scans its own repo (the literal token never appears in source).
+const FAKE_ANTHROPIC_KEY = `sk-ant-${'leaked'.repeat(6)}`;
 const SECRET_FILE = `export const config = {
-  apiKey: 'sk-ant-leakedleakedleakedleakedleaked',
+  apiKey: '${FAKE_ANTHROPIC_KEY}',
 };
 `;
 
@@ -125,6 +128,22 @@ describe('security hardening (e2e)', () => {
     });
     const res = run(dir, ['claude-hook'], { input: payload });
     expect(res.exitCode).toBe(2);
+  });
+
+  it('catches a secret in the STAGED blob even after it is wiped from the working tree', () => {
+    // Stage the secret, then "clean up" the working tree without re-staging.
+    // The index (what commits) still carries the secret — the gate must read
+    // the staged blob, not the dirty working tree.
+    writeFileSync(join(dir, 'cfg.ts'), SECRET_FILE);
+    git(dir, ['add', 'cfg.ts']);
+    writeFileSync(join(dir, 'cfg.ts'), 'export const k = process.env.K;\n');
+
+    const staged = execaSync('git', ['show', ':cfg.ts'], { cwd: dir }).stdout;
+    expect(staged).toMatch(/sk-ant-/); // the committed blob is the leaky one
+
+    const res = run(dir, ['check', '--staged', '--mode', 'pre-commit']);
+    expect(res.exitCode).toBe(1);
+    expect(res.stderr + res.stdout).toMatch(/secret-in-diff/);
   });
 
   it('check --base analyzes files changed vs. a base ref (CI mode)', () => {

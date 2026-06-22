@@ -6,4 +6,4 @@ A baseline snapshots current metrics so the gate only blocks **regressions**, no
 
 1. Check whether `.quality-gate-baseline.json` already exists.
 2. If it does, confirm with me before overwriting — re-baselining accepts the current state as the new floor.
-3. Run `npx quality-gate baseline --force` and report how many files were captured.
+3. Run `pnpm exec cerberus baseline --force` and report how many files were captured.

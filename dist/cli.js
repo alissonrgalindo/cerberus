@@ -101,6 +101,9 @@ var ALWAYS_SKIP = /* @__PURE__ */ new Set(["node_modules", ".git", "dist", ".nex
 function toPosix(p) {
   return p.split(sep).join("/");
 }
+function isBuildArtifactPath(relPosixPath) {
+  return relPosixPath.split("/").some((segment) => ALWAYS_SKIP.has(segment));
+}
 function makeIgnoreMatcher(patterns) {
   const isMatch = picomatch(patterns, { dot: true });
   return (relPosixPath) => isMatch(relPosixPath);
@@ -470,17 +473,20 @@ function lineOf(content, idx) {
   }
   return line;
 }
-function analyzeMigrationSafety(files, cwd) {
+function readFromDisk(abs) {
+  try {
+    return readFileSync3(abs, "utf8");
+  } catch {
+    return null;
+  }
+}
+function analyzeMigrationSafety(files, cwd, readContent = readFromDisk) {
   const sqlFiles = files.filter((f) => SQL_EXT.test(f));
   if (sqlFiles.length === 0) return [];
   const out = [];
   for (const abs of sqlFiles) {
-    let sql;
-    try {
-      sql = readFileSync3(abs, "utf8");
-    } catch {
-      continue;
-    }
+    const sql = readContent(abs);
+    if (sql === null) continue;
     const rel = toPosix(relative4(cwd, abs));
     const cleaned = sql.replace(/--.*$/gm, "");
     for (const pattern of PATTERNS) {
@@ -1007,15 +1013,18 @@ function lockfileHasPackage(lockContent, name) {
   ];
   return patterns.some((re) => re.test(lockContent));
 }
-function analyzePyManifest(abs, cwd) {
+function readFromDisk2(abs) {
+  try {
+    return readFileSync5(abs, "utf8");
+  } catch {
+    return null;
+  }
+}
+function analyzePyManifest(abs, cwd, readContent) {
   const out = [];
   const rel = toPosix(relative5(cwd, abs));
-  let currentRaw;
-  try {
-    currentRaw = readFileSync5(abs, "utf8");
-  } catch {
-    return out;
-  }
+  const currentRaw = readContent(abs);
+  if (currentRaw === null) return out;
   const current = extractDeclaredPyDeps("pyproject.toml", currentRaw);
   const head = headContent(cwd, rel);
   const before = head ? extractDeclaredPyDeps("pyproject.toml", head) : /* @__PURE__ */ new Set();
@@ -1049,19 +1058,15 @@ function analyzePyManifest(abs, cwd) {
   }
   return out;
 }
-function analyzeNewDependency(stagedFiles, cwd) {
+function analyzeNewDependency(stagedFiles, cwd, readContent = readFromDisk2) {
   const out = [];
   const manifests = stagedFiles.filter((f) => basename(f) === "package.json");
   const pyManifests = stagedFiles.filter((f) => basename(f) === "pyproject.toml");
-  for (const abs of pyManifests) out.push(...analyzePyManifest(abs, cwd));
+  for (const abs of pyManifests) out.push(...analyzePyManifest(abs, cwd, readContent));
   for (const abs of manifests) {
     const rel = toPosix(relative5(cwd, abs));
-    let currentRaw;
-    try {
-      currentRaw = readFileSync5(abs, "utf8");
-    } catch {
-      continue;
-    }
+    const currentRaw = readContent(abs);
+    if (currentRaw === null) continue;
     const current = parsePkg(currentRaw);
     if (!current) continue;
     const head = headContent(cwd, rel);
@@ -1188,7 +1193,14 @@ function isEnvFile(name) {
   if (ENV_ALLOWLIST.test(name)) return false;
   return true;
 }
-function analyzeSecretInDiff(files, cwd) {
+function readFromDisk3(abs) {
+  try {
+    return readFileSync6(abs, "utf8");
+  } catch {
+    return null;
+  }
+}
+function analyzeSecretInDiff(files, cwd, readContent = readFromDisk3) {
   const out = [];
   for (const abs of files) {
     const rel = toPosix(relative6(cwd, abs));
@@ -1205,12 +1217,8 @@ function analyzeSecretInDiff(files, cwd) {
       out.push({ file: rel, violation });
       continue;
     }
-    let content;
-    try {
-      content = readFileSync6(abs, "utf8");
-    } catch {
-      continue;
-    }
+    const content = readContent(abs);
+    if (content === null) continue;
     for (const pattern of PATTERNS2) {
       pattern.regex.lastIndex = 0;
       let m;
@@ -1388,20 +1396,27 @@ function saveBaseline(cwd, baseline) {
 
 // src/commit-detect.ts
 var VALUE_OPTS = /^(-C|-c|--git-dir|--work-tree|--namespace|--exec-path)$/;
+function tokenIsGit(token) {
+  const stripped = token.replace(/^[!(){]+/, "");
+  const base = stripped.split(/[/\\]/).pop() ?? stripped;
+  return base === "git" || base === "git.exe";
+}
 function segmentIsCommit(segment) {
   const tokens = segment.trim().split(/\s+/).filter(Boolean);
-  const gitIdx = tokens.indexOf("git");
-  if (gitIdx === -1) return false;
-  let i = gitIdx + 1;
-  while (i < tokens.length && tokens[i].startsWith("-")) {
-    const opt = tokens[i];
-    i += 1;
-    if (VALUE_OPTS.test(opt)) i += 1;
+  for (let g = 0; g < tokens.length; g += 1) {
+    if (!tokenIsGit(tokens[g])) continue;
+    let i = g + 1;
+    while (i < tokens.length && tokens[i].startsWith("-")) {
+      const opt = tokens[i];
+      i += 1;
+      if (VALUE_OPTS.test(opt)) i += 1;
+    }
+    if (tokens[i] === "commit") return true;
   }
-  return tokens[i] === "commit";
+  return false;
 }
 function isGitCommit(command) {
-  return command.split(/&&|\|\||;|\|/).some(segmentIsCommit);
+  return command.split(/&&|\|\||[;|&\n\r]/).some(segmentIsCommit);
 }
 
 // src/config.ts
@@ -1434,7 +1449,8 @@ function defaultConfig() {
         "cognitive",
         "cyclomatic",
         "type-safety",
-        "coverage",
+        // 'coverage' is opt-in: it spawns a vitest run, too heavy for a default
+        // pre-commit hook. Add it to preCommit.enabled when you want it.
         "duplication",
         "transaction-required",
         "revalidate-required",
@@ -1487,7 +1503,6 @@ var monorepo_turborepo_default = {
       "cognitive",
       "cyclomatic",
       "type-safety",
-      "coverage",
       "duplication",
       "transaction-required",
       "revalidate-required",
@@ -1537,7 +1552,6 @@ var nextjs_default = {
       "cognitive",
       "cyclomatic",
       "type-safety",
-      "coverage",
       "duplication",
       "transaction-required",
       "revalidate-required",
@@ -1586,7 +1600,6 @@ var node_cli_default = {
       "cognitive",
       "cyclomatic",
       "type-safety",
-      "coverage",
       "duplication",
       "n-plus-one-query",
       "migration-safety",
@@ -2654,6 +2667,14 @@ function getChangedFiles(cwd, baseRef, filter = "ACMR") {
 function getFileContent(filePath) {
   return readFileSync12(filePath, "utf8");
 }
+function getStagedContent(cwd, relPath) {
+  try {
+    const { stdout } = execaSync4("git", ["show", `:${relPath}`], { cwd, stripFinalNewline: false });
+    return stdout;
+  } catch {
+    return null;
+  }
+}
 
 // src/injector.ts
 import { execaSync as execaSync5 } from "execa";
@@ -2698,7 +2719,7 @@ function applyTodoInjection(cwd, report, attempt) {
 }
 function stageFiles(cwd, files) {
   if (files.length === 0) return;
-  execaSync5("git", ["add", ...files], { cwd, reject: false });
+  execaSync5("git", ["add", "--", ...files], { cwd, reject: false });
 }
 
 // src/install-hooks.ts
@@ -2932,6 +2953,28 @@ async function performCheck(opts) {
       enabled: opts.securityOnly ? enabledWithSecurity.filter((a) => SECURITY_ANALYZERS.has(a)) : enabledWithSecurity
     }
   };
+  const isIgnored = makeIgnoreMatcher(fullConfig.ignore);
+  const skipQuality = (abs) => {
+    const rel = relKey(cwd, abs);
+    return isIgnored(rel) || isBuildArtifactPath(rel);
+  };
+  const securityConfig = {
+    ...config,
+    preCommit: {
+      ...config.preCommit,
+      enabled: config.preCommit.enabled.filter((a) => SECURITY_ANALYZERS.has(a))
+    }
+  };
+  const readStagedOrDisk = (abs) => {
+    const staged = getStagedContent(cwd, relKey(cwd, abs));
+    if (staged !== null) return staged;
+    try {
+      return readFileSync15(abs, "utf8");
+    } catch {
+      return null;
+    }
+  };
+  const readSecuritySource = opts.staged ? readStagedOrDisk : void 0;
   const baseline = loadBaseline(cwd);
   const allStaged = opts.files.filter((f) => existsSync11(f));
   const files = allStaged.filter(isAnalyzable);
@@ -2941,34 +2984,48 @@ async function performCheck(opts) {
   const pyFiles = files.filter(isPyAnalyzable);
   for (const abs of tsFiles) {
     const rel = relKey(cwd, abs);
-    const report = await analyzeFile(rel, getFileContent(abs), config, baseline?.files[rel]);
+    const qualitySkipped = skipQuality(abs);
+    const report = await analyzeFile(
+      rel,
+      getFileContent(abs),
+      qualitySkipped ? securityConfig : config,
+      qualitySkipped ? void 0 : baseline?.files[rel]
+    );
     reports.push(report);
   }
   for (const abs of pyFiles) {
     const rel = relKey(cwd, abs);
-    reports.push(await analyzePythonFile(rel, getFileContent(abs), config));
+    reports.push(
+      await analyzePythonFile(rel, getFileContent(abs), skipQuality(abs) ? securityConfig : config)
+    );
   }
   const notes = [];
   const enabled = new Set(config.preCommit.enabled);
   const setViolations = [];
   if (opts.mode === "pre-commit") {
+    const tsQualityFiles = tsFiles.filter((f) => !skipQuality(f));
     if (enabled.has("duplication")) {
-      setViolations.push(...analyzeDuplication(tsFiles, cwd, config));
+      setViolations.push(...analyzeDuplication(tsQualityFiles, cwd, config));
     }
     if (enabled.has("coverage")) {
-      const cov = await analyzeCoverage(tsFiles.map((f) => relKey(cwd, f)), cwd, baseline, config);
+      const cov = await analyzeCoverage(
+        tsQualityFiles.map((f) => relKey(cwd, f)),
+        cwd,
+        baseline,
+        config
+      );
       if (cov.skipped && cov.reason) notes.push(`coverage: ${cov.reason}`);
       setViolations.push(...cov.violations);
     }
   }
   if (enabled.has("migration-safety") && sqlFiles.length > 0) {
-    setViolations.push(...analyzeMigrationSafety(sqlFiles, cwd));
+    setViolations.push(...analyzeMigrationSafety(sqlFiles, cwd, readSecuritySource));
   }
   if (enabled.has("secret-in-diff") && allStaged.length > 0) {
-    setViolations.push(...analyzeSecretInDiff(allStaged, cwd));
+    setViolations.push(...analyzeSecretInDiff(allStaged, cwd, readSecuritySource));
   }
   if (enabled.has("new-dependency") && allStaged.length > 0) {
-    setViolations.push(...analyzeNewDependency(allStaged, cwd));
+    setViolations.push(...analyzeNewDependency(allStaged, cwd, readSecuritySource));
   }
   for (const sv of setViolations) {
     let report = reports.find((r) => r.file === sv.file);
@@ -3011,8 +3068,9 @@ async function runCheck(args) {
       chalk2.dim("quality-gate: QUALITY_GATE_BYPASS=1 \u2014 quality checks skipped, security checks still enforced\n")
     );
   }
+  const staged = !args.file && !args.base;
   const files = args.file ? [toAbs(cwd, args.file)] : args.base ? getChangedFiles(cwd, args.base).map((f) => toAbs(cwd, f)) : getStagedFiles(cwd).map((f) => toAbs(cwd, f));
-  const { report, exitCode } = await performCheck({ cwd, files, mode: args.mode, securityOnly });
+  const { report, exitCode } = await performCheck({ cwd, files, mode: args.mode, securityOnly, staged });
   if (args.format === "json") reportJson(report);
   else if (args.format === "github") reportGithub(report);
   else reportHuman(report);
@@ -3031,7 +3089,7 @@ async function runClaudeHook() {
   const securityOnly = /\[skip-cerberus\]/.test(command) || /\[skip-quality\]/.test(command) || /\bCERBERUS_BYPASS=1\b/.test(command) || /\bQUALITY_GATE_BYPASS=1\b/.test(command) || bypassActive();
   const files = getStagedFiles(cwd).map((f) => toAbs(cwd, f));
   if (files.length === 0) process.exit(0);
-  const { report, exitCode } = await performCheck({ cwd, files, mode: "pre-commit", securityOnly });
+  const { report, exitCode } = await performCheck({ cwd, files, mode: "pre-commit", securityOnly, staged: true });
   if (exitCode === 0) process.exit(0);
   const failing = report.files.filter((f) => !f.passed);
   const hasSecurity = failing.some((f) => f.violations.some(isSecurityViolation));

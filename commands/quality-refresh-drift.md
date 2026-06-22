@@ -2,7 +2,7 @@
 description: Re-baseline every drifted file in one shot (after a deliberate refactor)
 ---
 
-Run `npx quality-gate refresh-baseline --all-drifted`.
+Run `pnpm exec cerberus refresh-baseline --all-drifted`.
 
 Before running:
 

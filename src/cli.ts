@@ -17,8 +17,8 @@ import { isGitCommit } from './commit-detect.js';
 import { CONFIG_FILE, loadConfig } from './config.js';
 import { listDrift, type DriftEntry } from './drift.js';
 import { analyzeFile, analyzePythonFile, computeFileBaseline, type FileReport } from './engine.js';
-import { CODE_EXT, DTS_EXT, toPosix, walkTsFiles } from './files.js';
-import { getChangedFiles, getFileContent, getStagedFiles } from './git-diff.js';
+import { CODE_EXT, DTS_EXT, isBuildArtifactPath, makeIgnoreMatcher, toPosix, walkTsFiles } from './files.js';
+import { getChangedFiles, getFileContent, getStagedContent, getStagedFiles } from './git-diff.js';
 import { applyTodoInjection, stageFiles } from './injector.js';
 import {
   detectInstalledHook,
@@ -87,6 +87,8 @@ async function performCheck(opts: {
   files: string[];
   mode?: string;
   securityOnly?: boolean;
+  /** Files come from the git index — read the staged blob, not the working tree. */
+  staged?: boolean;
 }): Promise<CheckOutcome> {
   const { cwd } = opts;
   const fullConfig = loadConfig(cwd);
@@ -105,6 +107,43 @@ async function performCheck(opts: {
         : enabledWithSecurity,
     },
   };
+  // Quality analyzers skip two things: files matched by `ignore`, and build
+  // artifacts (dist/, node_modules/, .next/, …). `ignore` is a QUALITY knob and
+  // build output is generated, not authored — neither is worth grading. The
+  // SECURITY tier deliberately runs on both: otherwise a blocked agent could
+  // add `**/*` to `ignore` to silence the secret scanner, and a secret inlined
+  // into a committed bundle would go unseen. So ignored / generated files still
+  // run the per-file security analyzer (injection) and every set-level security
+  // pass.
+  const isIgnored = makeIgnoreMatcher(fullConfig.ignore);
+  const skipQuality = (abs: string): boolean => {
+    const rel = relKey(cwd, abs);
+    return isIgnored(rel) || isBuildArtifactPath(rel);
+  };
+  const securityConfig: Config = {
+    ...config,
+    preCommit: {
+      ...config.preCommit,
+      enabled: config.preCommit.enabled.filter((a) => SECURITY_ANALYZERS.has(a)),
+    },
+  };
+
+  // When the file list comes from the index, the file-reading security
+  // analyzers judge the STAGED blob (what actually commits), not the dirty
+  // working tree — so a secret staged then wiped from disk can't slip past.
+  // Falls back to disk if the path has no index entry. `undefined` → analyzers
+  // use their default working-tree reader (CLI --file, post-edit hook).
+  const readStagedOrDisk = (abs: string): string | null => {
+    const staged = getStagedContent(cwd, relKey(cwd, abs));
+    if (staged !== null) return staged;
+    try {
+      return readFileSync(abs, 'utf8');
+    } catch {
+      return null;
+    }
+  };
+  const readSecuritySource = opts.staged ? readStagedOrDisk : undefined;
+
   const baseline = loadBaseline(cwd);
   const allStaged = opts.files.filter((f) => existsSync(f));
   const files = allStaged.filter(isAnalyzable);
@@ -115,12 +154,20 @@ async function performCheck(opts: {
   const pyFiles = files.filter(isPyAnalyzable);
   for (const abs of tsFiles) {
     const rel = relKey(cwd, abs);
-    const report = await analyzeFile(rel, getFileContent(abs), config, baseline?.files[rel]);
+    const qualitySkipped = skipQuality(abs);
+    const report = await analyzeFile(
+      rel,
+      getFileContent(abs),
+      qualitySkipped ? securityConfig : config,
+      qualitySkipped ? undefined : baseline?.files[rel],
+    );
     reports.push(report);
   }
   for (const abs of pyFiles) {
     const rel = relKey(cwd, abs);
-    reports.push(await analyzePythonFile(rel, getFileContent(abs), config));
+    reports.push(
+      await analyzePythonFile(rel, getFileContent(abs), skipQuality(abs) ? securityConfig : config),
+    );
   }
 
   // Set-level analyzers (coverage, duplication, migration-safety) run regardless
@@ -131,26 +178,33 @@ async function performCheck(opts: {
   const setViolations: SetViolation[] = [];
 
   if (opts.mode === 'pre-commit') {
+    // duplication and coverage are quality analyzers — they honor the same skips.
+    const tsQualityFiles = tsFiles.filter((f) => !skipQuality(f));
     if (enabled.has('duplication')) {
-      setViolations.push(...analyzeDuplication(tsFiles, cwd, config));
+      setViolations.push(...analyzeDuplication(tsQualityFiles, cwd, config));
     }
     if (enabled.has('coverage')) {
-      const cov = await analyzeCoverage(tsFiles.map((f) => relKey(cwd, f)), cwd, baseline, config);
+      const cov = await analyzeCoverage(
+        tsQualityFiles.map((f) => relKey(cwd, f)),
+        cwd,
+        baseline,
+        config,
+      );
       if (cov.skipped && cov.reason) notes.push(`coverage: ${cov.reason}`);
       setViolations.push(...cov.violations);
     }
   }
   if (enabled.has('migration-safety') && sqlFiles.length > 0) {
-    setViolations.push(...analyzeMigrationSafety(sqlFiles, cwd));
+    setViolations.push(...analyzeMigrationSafety(sqlFiles, cwd, readSecuritySource));
   }
   // secret-in-diff scans every staged file regardless of extension (env files,
   // configs, fixtures, markdown — secrets leak through all of them).
   if (enabled.has('secret-in-diff') && allStaged.length > 0) {
-    setViolations.push(...analyzeSecretInDiff(allStaged, cwd));
+    setViolations.push(...analyzeSecretInDiff(allStaged, cwd, readSecuritySource));
   }
   // new-dependency audits staged package.json manifests for slopsquatting.
   if (enabled.has('new-dependency') && allStaged.length > 0) {
-    setViolations.push(...analyzeNewDependency(allStaged, cwd));
+    setViolations.push(...analyzeNewDependency(allStaged, cwd, readSecuritySource));
   }
 
   for (const sv of setViolations) {
@@ -211,13 +265,14 @@ async function runCheck(args: {
     );
   }
 
+  const staged = !args.file && !args.base; // the --staged / default path reads the index
   const files = args.file
     ? [toAbs(cwd, args.file)]
     : args.base
       ? getChangedFiles(cwd, args.base).map((f) => toAbs(cwd, f))
       : getStagedFiles(cwd).map((f) => toAbs(cwd, f));
 
-  const { report, exitCode } = await performCheck({ cwd, files, mode: args.mode, securityOnly });
+  const { report, exitCode } = await performCheck({ cwd, files, mode: args.mode, securityOnly, staged });
   if (args.format === 'json') reportJson(report);
   else if (args.format === 'github') reportGithub(report);
   else reportHuman(report);
@@ -252,7 +307,7 @@ async function runClaudeHook(): Promise<void> {
   const files = getStagedFiles(cwd).map((f) => toAbs(cwd, f));
   if (files.length === 0) process.exit(0);
 
-  const { report, exitCode } = await performCheck({ cwd, files, mode: 'pre-commit', securityOnly });
+  const { report, exitCode } = await performCheck({ cwd, files, mode: 'pre-commit', securityOnly, staged: true });
   if (exitCode === 0) process.exit(0);
 
   const failing = report.files.filter((f) => !f.passed);
