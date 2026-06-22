@@ -37,8 +37,6 @@ export function getChangedFiles(cwd: string, baseRef: string, filter = 'ACMR'): 
 }
 
 /** Reads file content from disk (the agent may have edited a staged file in place). */
-// cerberus-allow: shallow-module — intentional fs seam: the one place working-tree
-// reads happen, so analyzers can always be handed content instead of touching disk.
 export function getFileContent(filePath: string): string {
   return readFileSync(filePath, 'utf8');
 }

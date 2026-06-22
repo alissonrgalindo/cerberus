@@ -11,7 +11,7 @@ import {
 } from './analyzers/python.js';
 import { analyzeNPlusOneQuery } from './analyzers/n-plus-one-query.js';
 import { analyzeRevalidateRequired } from './analyzers/revalidate-required.js';
-import { analyzeShallowModule } from './analyzers/shallow-module.js';
+import { analyzeShallowModule, measureShallowModule } from './analyzers/shallow-module.js';
 import { analyzeSilentCatch, measureSilentCatch } from './analyzers/silent-catch.js';
 import { analyzeTransactionRequired } from './analyzers/transaction-required.js';
 import { analyzeTypeSafety, measureTypeSafety } from './analyzers/type-safety.js';
@@ -172,6 +172,7 @@ export function computeFileBaseline(filePath: string, fileContent: string): File
       functionLength: { max: maxLen, perFunction: lengthPer },
       parameterCount: { max: maxParams, perFunction: paramPer },
       silentCatch: { count: measureSilentCatch(filePath, fileContent) },
+      shallowModule: { count: measureShallowModule(filePath, fileContent) },
     },
   };
 }

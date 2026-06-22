@@ -2330,9 +2330,14 @@ function findShallowModules(filePath, fileContent) {
   }
   return out;
 }
+function measureShallowModule(filePath, fileContent) {
+  return findShallowModules(filePath, fileContent).length;
+}
 async function analyzeShallowModule(input) {
   const findings = findShallowModules(input.filePath, input.fileContent);
-  const violations = findings.map((f) => ({
+  const baseCount = input.fileBaseline?.metrics.shallowModule?.count ?? 0;
+  const flagged = findings.length > baseCount ? findings : [];
+  const violations = flagged.map((f) => ({
     analyzer: "shallow-module",
     location: `${f.name}:${f.line}`,
     current: 1,
@@ -2610,7 +2615,8 @@ function computeFileBaseline(filePath, fileContent) {
       coverage: { percent: 0 },
       functionLength: { max: maxLen, perFunction: lengthPer },
       parameterCount: { max: maxParams, perFunction: paramPer },
-      silentCatch: { count: measureSilentCatch(filePath, fileContent) }
+      silentCatch: { count: measureSilentCatch(filePath, fileContent) },
+      shallowModule: { count: measureShallowModule(filePath, fileContent) }
     }
   };
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { analyzeShallowModule } from '../../src/analyzers/shallow-module.js';
-import { inputFromSource } from '../helpers.js';
+import { baselineWith, inputFromSource } from '../helpers.js';
 
 describe('shallow-module analyzer', () => {
   it('passes a function with real behavior', async () => {
@@ -48,6 +48,31 @@ export function caller(id: string) { return getUserById(id) + '!'; }`;
     const result = await analyzeShallowModule(inputFromSource('inline.ts', src));
     // caller is also a single-call return → still shallow. But getUserById isn't exported.
     expect(result.violations.every((v) => !v.location.startsWith('getUserById'))).toBe(true);
+  });
+
+  it('grandfathers legacy shallow modules via the baseline (delta, not absolute)', async () => {
+    const src = `import { repo } from './repo';
+export const findUser = (id: string) => repo.findById(id);`;
+    // New file (no baseline) → held to the absolute threshold, flagged.
+    const fresh = await analyzeShallowModule(inputFromSource('inline.ts', src));
+    expect(fresh.passed).toBe(false);
+    // Baseline already snapshotted this one shallow module → grandfathered.
+    const grandfathered = await analyzeShallowModule(
+      inputFromSource('inline.ts', src, { baseline: baselineWith({ shallowModule: { count: 1 } }) }),
+    );
+    expect(grandfathered.passed).toBe(true);
+  });
+
+  it('still flags a NEW shallow module added beyond the baseline count', async () => {
+    const src = `import { repo } from './repo';
+export const findUser = (id: string) => repo.findById(id);
+export const findOrg = (id: string) => repo.findOrgById(id);`;
+    // Two shallow modules now; the baseline knew of only one → a regression.
+    const result = await analyzeShallowModule(
+      inputFromSource('inline.ts', src, { baseline: baselineWith({ shallowModule: { count: 1 } }) }),
+    );
+    expect(result.passed).toBe(false);
+    expect(result.violations.length).toBe(2);
   });
 
   it('respects the suppression comment', async () => {

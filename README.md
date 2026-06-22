@@ -47,7 +47,7 @@ Cerberus is distributed as a **git dependency** (not on npm — the bare `cerber
 
 ```bash
 # 1. Add Cerberus (prebuilt dist is committed — no build step)
-pnpm add -D github:alissonrgalindo/cerberus#v0.3.0
+pnpm add -D github:alissonrgalindo/cerberus#v0.4.0
 
 # 2. Pick a preset
 echo '{ "extends": "@cerberus/nextjs" }' > .cerberus.json

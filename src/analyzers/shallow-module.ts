@@ -125,9 +125,22 @@ function findShallowModules(filePath: string, fileContent: string): Finding[] {
   return out;
 }
 
+/** Counts shallow modules in a file — used to snapshot the baseline so legacy pass-throughs are grandfathered. */
+export function measureShallowModule(filePath: string, fileContent: string): number {
+  return findShallowModules(filePath, fileContent).length;
+}
+
 export async function analyzeShallowModule(input: AnalyzerInput): Promise<AnalyzerResult> {
   const findings = findShallowModules(input.filePath, input.fileContent);
-  const violations: Violation[] = findings.map((f) => ({
+  // Delta vs baseline (mirrors silent-catch): legacy pass-throughs captured at
+  // `cerberus baseline` time are grandfathered; we only block when a file gains
+  // MORE shallow modules than its snapshot. A new file (no baseline) is held to
+  // the absolute threshold, so every finding is flagged. This keeps the
+  // "delta, not absolute — legacy debt grandfathered" promise: touching a utils
+  // file full of one-line exports no longer floods the gate.
+  const baseCount = input.fileBaseline?.metrics.shallowModule?.count ?? 0;
+  const flagged = findings.length > baseCount ? findings : [];
+  const violations: Violation[] = flagged.map((f) => ({
     analyzer: 'shallow-module',
     location: `${f.name}:${f.line}`,
     current: 1,
