@@ -93,17 +93,26 @@ function lockfileHasPackage(lockContent: string, name: string): boolean {
   return patterns.some((re) => re.test(lockContent));
 }
 
+/** Default content source: the working tree. Pre-commit passes a staged-blob reader. */
+function readFromDisk(abs: string): string | null {
+  try {
+    return readFileSync(abs, 'utf8');
+  } catch {
+    return null;
+  }
+}
+
 /** New deps in a staged pyproject.toml must have an entry in a Python lockfile. */
-function analyzePyManifest(abs: string, cwd: string): SetViolation[] {
+function analyzePyManifest(
+  abs: string,
+  cwd: string,
+  readContent: (abs: string) => string | null,
+): SetViolation[] {
   const out: SetViolation[] = [];
   const rel = toPosix(relative(cwd, abs));
 
-  let currentRaw: string;
-  try {
-    currentRaw = readFileSync(abs, 'utf8');
-  } catch {
-    return out;
-  }
+  const currentRaw = readContent(abs);
+  if (currentRaw === null) return out;
   const current = extractDeclaredPyDeps('pyproject.toml', currentRaw);
   const head = headContent(cwd, rel);
   const before = head ? extractDeclaredPyDeps('pyproject.toml', head) : new Set<string>();
@@ -145,21 +154,21 @@ function analyzePyManifest(abs: string, cwd: string): SetViolation[] {
   return out;
 }
 
-export function analyzeNewDependency(stagedFiles: string[], cwd: string): SetViolation[] {
+export function analyzeNewDependency(
+  stagedFiles: string[],
+  cwd: string,
+  readContent: (abs: string) => string | null = readFromDisk,
+): SetViolation[] {
   const out: SetViolation[] = [];
   const manifests = stagedFiles.filter((f) => basename(f) === 'package.json');
   const pyManifests = stagedFiles.filter((f) => basename(f) === 'pyproject.toml');
-  for (const abs of pyManifests) out.push(...analyzePyManifest(abs, cwd));
+  for (const abs of pyManifests) out.push(...analyzePyManifest(abs, cwd, readContent));
 
   for (const abs of manifests) {
     const rel = toPosix(relative(cwd, abs));
 
-    let currentRaw: string;
-    try {
-      currentRaw = readFileSync(abs, 'utf8');
-    } catch {
-      continue;
-    }
+    const currentRaw = readContent(abs);
+    if (currentRaw === null) continue;
     const current = parsePkg(currentRaw);
     if (!current) continue;
 

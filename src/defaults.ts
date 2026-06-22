@@ -26,7 +26,8 @@ export function defaultConfig(): Config {
         'cognitive',
         'cyclomatic',
         'type-safety',
-        'coverage',
+        // 'coverage' is opt-in: it spawns a vitest run, too heavy for a default
+        // pre-commit hook. Add it to preCommit.enabled when you want it.
         'duplication',
         'transaction-required',
         'revalidate-required',

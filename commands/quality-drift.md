@@ -2,7 +2,7 @@
 description: List files whose content drifted from the baseline (with deltas)
 ---
 
-Run `npx quality-gate drift` to see which files have changed since the baseline was taken, and by how much (cog/cyc/any deltas).
+Run `pnpm exec cerberus drift` to see which files have changed since the baseline was taken, and by how much (cog/cyc/any deltas).
 
 Useful when:
 - `doctor` reports drifted files and you want to know which.

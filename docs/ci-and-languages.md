@@ -11,7 +11,8 @@ The PR is the enforcement point:
 # .github/workflows/cerberus.yml (consumer project)
 - uses: actions/checkout@v4
   with: { fetch-depth: 0 }
-- run: npx cerberus check --base "origin/${{ github.base_ref }}" --format github
+- run: pnpm install --frozen-lockfile   # Cerberus comes from the git dependency
+- run: pnpm exec cerberus check --base "origin/${{ github.base_ref }}" --format github
 ```
 
 `--format github` emits workflow commands, so every violation shows up as an **inline annotation on the PR diff** (with a `[SECURITY]` tag where applicable) instead of a log line nobody opens.

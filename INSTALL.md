@@ -1,48 +1,64 @@
-# Installing the quality gate into a project
+# Installing Cerberus into a project
 
-Step-by-step for wiring `code-quality-gate` into a consumer repo (TypeScript, JavaScript, Python, or any mix). Written so a human **or a coding agent** can execute it top to bottom.
+Step-by-step for wiring **Cerberus** into a consumer repo (TypeScript, JavaScript, Python, or any mix).
+Written so a human **or a coding agent** can execute it top to bottom.
 
 ## 0. Requirements
 
 - Node 20+ available in the project (the CLI is Node-based even for Python repos)
 - A git repository
-- The plugin installed (Claude Code: `/plugin install code-quality-gate`) or this repo's `dist/cli.js` reachable via `npx quality-gate` / `node <path>/dist/cli.js`
 
-## 1. Create the config
+## 1. Install Cerberus (git dependency)
+
+Cerberus is distributed as a **git dependency** — it is not published to the public npm registry, so don't `npx cerberus` (that name belongs to an unrelated package).
+Pin a tag and add it as a dev dependency:
+
+```bash
+pnpm add -D github:alissonrgalindo/cerberus#v0.3.0
+# npm:  npm i -D github:alissonrgalindo/cerberus#v0.3.0
+# yarn: yarn add -D github:alissonrgalindo/cerberus#v0.3.0
+```
+
+The prebuilt `dist/` is committed, so there is no build step on install.
+Run the CLI through your package manager: `pnpm exec cerberus <cmd>` (or `npx cerberus <cmd>` resolves to the **local** install once it's a dependency).
+Claude Code plugin users can instead `/plugin install code-quality-gate` and skip the dependency.
+
+## 2. Create the config
 
 At the **repo root**:
 
 ```bash
-echo '{ "extends": "@quality-gate/nextjs" }' > .quality-gate.json
+echo '{ "extends": "@cerberus/nextjs" }' > .cerberus.json
 ```
 
-Pick the preset that fits: `@quality-gate/nextjs`, `@quality-gate/monorepo-turborepo`, `@quality-gate/node-cli`. For a Python-only repo, any preset works (the TS-specific analyzers simply never fire); `node-cli` is the leanest.
+Pick the preset that fits: `@cerberus/nextjs`, `@cerberus/monorepo-turborepo`, `@cerberus/node-cli`. For a Python-only repo, any preset works (the TS-specific analyzers simply never fire); `node-cli` is the leanest.
 
 Override only what you need, e.g.:
 
 ```json
 {
-  "extends": "@quality-gate/node-cli",
+  "extends": "@cerberus/node-cli",
   "ignore": ["**/*.test.{ts,tsx}", "**/tests/**", "**/migrations/**"],
   "thresholds": { "functionLength": 100 }
 }
 ```
 
-Note: the security analyzers (`secret-in-diff`, `migration-safety`, `injection`, `new-dependency`) are **always on** — listing or omitting them in `preCommit.enabled` has no effect. Don't try to disable them; it won't work by design.
+`ignore` excludes files from the **quality** analyzers only.
+The security analyzers (`secret-in-diff`, `migration-safety`, `injection`, `new-dependency`) are **always on**: listing or omitting them in `preCommit.enabled`, or matching a file with `ignore`, has no effect on them. Don't try to disable them; it won't work by design.
 
-## 2. Snapshot the baseline
+## 3. Snapshot the baseline
 
 ```bash
-npx quality-gate baseline
-git add .quality-gate-baseline.json && git commit -m "chore: quality-gate baseline"
+pnpm exec cerberus baseline
+git add .cerberus-baseline.json && git commit -m "chore: cerberus baseline"
 ```
 
 This records current metrics so **legacy code is never blocked** — the gate only stops regressions. If vitest + coverage data exist, per-file coverage floors are captured too. Commit the baseline file; it's shared by the team.
 
-## 3. Install the hooks
+## 4. Install the hooks
 
 ```bash
-npx quality-gate install-hooks
+pnpm exec cerberus install-hooks
 ```
 
 This wires three things (idempotent; wraps/preserves any existing pre-commit hook):
@@ -54,16 +70,16 @@ This wires three things (idempotent; wraps/preserves any existing pre-commit hoo
 Verify with:
 
 ```bash
-npx quality-gate doctor
+pnpm exec cerberus doctor
 ```
 
-## 4. Add the CI gate (the real enforcement point)
+## 5. Add the CI gate (the real enforcement point)
 
 Local hooks are advisory (`--no-verify` exists). The PR check is what actually guarantees nothing lands:
 
 ```yaml
-# .github/workflows/quality-gate.yml
-name: quality-gate
+# .github/workflows/cerberus.yml
+name: cerberus
 on: [pull_request]
 jobs:
   gate:
@@ -73,12 +89,13 @@ jobs:
         with: { fetch-depth: 0 } # required: --base needs the merge-base
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
-      - run: npx quality-gate check --base "origin/${{ github.base_ref }}" --format github
+      - run: pnpm install --frozen-lockfile   # installs Cerberus from the git dependency
+      - run: pnpm exec cerberus check --base "origin/${{ github.base_ref }}" --format github
 ```
 
 `--format github` renders each violation as an inline annotation on the PR diff (security ones tagged `[SECURITY]`). Make the job a required status check in branch protection.
 
-## 5. Smoke-test
+## 6. Smoke-test
 
 ```bash
 # should fail with secret-in-diff:
@@ -103,16 +120,16 @@ For Python repos, same idea with `eval(x)` in a `.py` file (blocked by `injectio
 
 | Situation | Command |
 |---|---|
-| Deliberate refactor changed metrics | `npx quality-gate refresh-baseline --file <path>` (or `--all-drifted`) |
-| See what drifted | `npx quality-gate drift` / `quality-gate diff` |
-| Worst files to refactor next | `npx quality-gate audit --top 20` |
-| Diagnose setup | `npx quality-gate doctor` |
-| Skip quality checks once (security still runs) | `QUALITY_GATE_BYPASS=1 git commit ...` |
-| False-positive on a specific line | `// quality-gate-allow: secret` / `injection` / `shallow-module` (TS) · `# quality-gate-allow: ...` (Python) |
+| Deliberate refactor changed metrics | `pnpm exec cerberus refresh-baseline --file <path>` (or `--all-drifted`) |
+| See what drifted | `pnpm exec cerberus drift` / `cerberus diff` |
+| Worst files to refactor next | `pnpm exec cerberus audit --top 20` |
+| Diagnose setup | `pnpm exec cerberus doctor` |
+| Skip quality checks once (security still runs) | `CERBERUS_BYPASS=1 git commit ...` |
+| False-positive on a specific line | `// cerberus-allow: secret` / `injection` / `shallow-module` (TS) · `# cerberus-allow: ...` (Python) |
 
 ## Rules for agents working in a gated repo
 
 - If the gate blocks you, **fix the violations** — each one comes with a concrete suggestion. Do not look for bypasses; security violations cannot be bypassed at all.
-- Never edit `.quality-gate.json`, `.quality-gate-baseline.json`, hook files, or `.claude/settings.json` to get a commit through.
-- Per-line `quality-gate-allow` suppressions are acceptable **only** for test fixtures / provably-static content, and should be mentioned to the user.
-- After 2 failed attempts on quality (non-security) violations, the gate will let the commit through with `// TODO: quality-gate(...)` markers — leave those markers in place; they are the debt trail.
+- Never edit `.cerberus.json`, `.cerberus-baseline.json`, hook files, or `.claude/settings.json` to get a commit through.
+- Per-line `cerberus-allow` suppressions are acceptable **only** for test fixtures / provably-static content, and should be mentioned to the user.
+- After 2 failed attempts on quality (non-security) violations, the gate will let the commit through with `// TODO: cerberus(...)` markers — leave those markers in place; they are the debt trail.

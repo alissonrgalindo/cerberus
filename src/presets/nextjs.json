@@ -23,7 +23,6 @@
       "cognitive",
       "cyclomatic",
       "type-safety",
-      "coverage",
       "duplication",
       "transaction-required",
       "revalidate-required",

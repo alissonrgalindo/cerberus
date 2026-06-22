@@ -22,7 +22,6 @@
       "cognitive",
       "cyclomatic",
       "type-safety",
-      "coverage",
       "duplication",
       "n-plus-one-query",
       "migration-safety",

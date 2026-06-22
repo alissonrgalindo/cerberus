@@ -40,3 +40,20 @@ export function getChangedFiles(cwd: string, baseRef: string, filter = 'ACMR'): 
 export function getFileContent(filePath: string): string {
   return readFileSync(filePath, 'utf8');
 }
+
+/**
+ * Reads the STAGED (index) content of a path — the bytes that would actually
+ * land in the commit, which can differ from the working tree under partial
+ * staging (`git add -p`) or a stage-then-edit. Security analyzers must judge
+ * what is committed, not the dirty working tree, so a secret staged then wiped
+ * from disk can't slip past. Returns null when the path has no index entry
+ * (caller falls back to disk).
+ */
+export function getStagedContent(cwd: string, relPath: string): string | null {
+  try {
+    const { stdout } = execaSync('git', ['show', `:${relPath}`], { cwd, stripFinalNewline: false });
+    return stdout;
+  } catch {
+    return null;
+  }
+}

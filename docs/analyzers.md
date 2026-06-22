@@ -8,7 +8,7 @@ For configuration and CLI usage see [configuration.md](./configuration.md); for 
 | Cognitive complexity | Hard-to-follow functions (Sonar metric) | 15 (.ts) / 20 (.tsx) |
 | Cyclomatic complexity | Too many branches (McCabe) | 10 |
 | Type safety | New `any`, `as unknown as`, `@ts-ignore`/`@ts-expect-error`/`@ts-nocheck` | 0 new |
-| Coverage delta | Coverage dropping below baseline (vitest) | no drop |
+| Coverage delta | Coverage dropping below baseline (vitest) — **opt-in** | no drop |
 | Duplication | Copy-paste blocks (jscpd, staged files only) | 30 lines |
 | Transaction required | 2+ Drizzle mutations in a `'use server'` function without `db.transaction(...)` (DDIA ch.7) | 1 mutation |
 | Revalidate required | Server Action that mutates without `revalidatePath`/`revalidateTag`/`redirect` | n/a |
@@ -24,7 +24,8 @@ For configuration and CLI usage see [configuration.md](./configuration.md); for 
 | New dependency | Dependency added to `package.json` with no lockfile entry (slopsquatting guard) | 0 |
 
 Complexity, type-safety, transaction-required, revalidate-required, n-plus-one-query, silent-catch, hallucinated-import, shallow-module, function-length and parameter-count run per file; coverage, duplication, migration-safety and secret-in-diff run once over the staged set.
-Coverage/duplication run only at commit time; migration-safety runs whenever staged `.sql` is present; secret-in-diff scans every staged file regardless of extension.
+Duplication runs at commit time; migration-safety runs whenever staged `.sql` is present; secret-in-diff scans every staged file regardless of extension.
+**Coverage is opt-in** — it spawns a `vitest` run, which is too heavy for a default pre-commit hook, so it ships disabled. Add `"coverage"` to `preCommit.enabled` (and run `cerberus baseline` with vitest data present) to turn it on.
 
 ## Notes on the DDIA-inspired analyzers
 

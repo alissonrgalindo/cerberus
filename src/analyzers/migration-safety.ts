@@ -103,19 +103,28 @@ function lineOf(content: string, idx: number): number {
   return line;
 }
 
+/** Default content source: the working tree. Pre-commit passes a staged-blob reader. */
+function readFromDisk(abs: string): string | null {
+  try {
+    return readFileSync(abs, 'utf8');
+  } catch {
+    return null;
+  }
+}
+
 /** Public entry: scans the staged SQL files for unsafe operations. */
-export function analyzeMigrationSafety(files: string[], cwd: string): SetViolation[] {
+export function analyzeMigrationSafety(
+  files: string[],
+  cwd: string,
+  readContent: (abs: string) => string | null = readFromDisk,
+): SetViolation[] {
   const sqlFiles = files.filter((f) => SQL_EXT.test(f));
   if (sqlFiles.length === 0) return [];
 
   const out: SetViolation[] = [];
   for (const abs of sqlFiles) {
-    let sql: string;
-    try {
-      sql = readFileSync(abs, 'utf8');
-    } catch {
-      continue;
-    }
+    const sql = readContent(abs);
+    if (sql === null) continue;
     const rel = toPosix(relative(cwd, abs));
     // Strip line comments to avoid false positives on docs.
     const cleaned = sql.replace(/--.*$/gm, '');
