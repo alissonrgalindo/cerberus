@@ -17,7 +17,7 @@ import { isGitCommit } from './commit-detect.js';
 import { CONFIG_FILE, loadConfig } from './config.js';
 import { listDrift, type DriftEntry } from './drift.js';
 import { analyzeFile, analyzePythonFile, computeFileBaseline, type FileReport } from './engine.js';
-import { CODE_EXT, DTS_EXT, makeIgnoreMatcher, toPosix, walkTsFiles } from './files.js';
+import { CODE_EXT, DTS_EXT, isBuildArtifactPath, makeIgnoreMatcher, toPosix, walkTsFiles } from './files.js';
 import { getChangedFiles, getFileContent, getStagedContent, getStagedFiles } from './git-diff.js';
 import { applyTodoInjection, stageFiles } from './injector.js';
 import {
@@ -107,14 +107,19 @@ async function performCheck(opts: {
         : enabledWithSecurity,
     },
   };
-  // `ignore` is a QUALITY knob: it drops files from the quality analyzers (and
-  // from the baseline). The SECURITY tier deliberately ignores it — otherwise a
-  // blocked agent could add `**/*` to the ignore list to silence the secret
-  // scanner, the same self-granted vote on security the gate already refuses to
-  // give the config. Ignored files therefore still run the per-file security
-  // analyzer (injection) and every set-level security pass.
+  // Quality analyzers skip two things: files matched by `ignore`, and build
+  // artifacts (dist/, node_modules/, .next/, …). `ignore` is a QUALITY knob and
+  // build output is generated, not authored — neither is worth grading. The
+  // SECURITY tier deliberately runs on both: otherwise a blocked agent could
+  // add `**/*` to `ignore` to silence the secret scanner, and a secret inlined
+  // into a committed bundle would go unseen. So ignored / generated files still
+  // run the per-file security analyzer (injection) and every set-level security
+  // pass.
   const isIgnored = makeIgnoreMatcher(fullConfig.ignore);
-  const ignoredRel = (abs: string): boolean => isIgnored(relKey(cwd, abs));
+  const skipQuality = (abs: string): boolean => {
+    const rel = relKey(cwd, abs);
+    return isIgnored(rel) || isBuildArtifactPath(rel);
+  };
   const securityConfig: Config = {
     ...config,
     preCommit: {
@@ -149,19 +154,19 @@ async function performCheck(opts: {
   const pyFiles = files.filter(isPyAnalyzable);
   for (const abs of tsFiles) {
     const rel = relKey(cwd, abs);
-    const ignored = ignoredRel(abs);
+    const qualitySkipped = skipQuality(abs);
     const report = await analyzeFile(
       rel,
       getFileContent(abs),
-      ignored ? securityConfig : config,
-      ignored ? undefined : baseline?.files[rel],
+      qualitySkipped ? securityConfig : config,
+      qualitySkipped ? undefined : baseline?.files[rel],
     );
     reports.push(report);
   }
   for (const abs of pyFiles) {
     const rel = relKey(cwd, abs);
     reports.push(
-      await analyzePythonFile(rel, getFileContent(abs), ignoredRel(abs) ? securityConfig : config),
+      await analyzePythonFile(rel, getFileContent(abs), skipQuality(abs) ? securityConfig : config),
     );
   }
 
@@ -173,8 +178,8 @@ async function performCheck(opts: {
   const setViolations: SetViolation[] = [];
 
   if (opts.mode === 'pre-commit') {
-    // duplication and coverage are quality analyzers — they honor `ignore`.
-    const tsQualityFiles = tsFiles.filter((f) => !ignoredRel(f));
+    // duplication and coverage are quality analyzers — they honor the same skips.
+    const tsQualityFiles = tsFiles.filter((f) => !skipQuality(f));
     if (enabled.has('duplication')) {
       setViolations.push(...analyzeDuplication(tsQualityFiles, cwd, config));
     }

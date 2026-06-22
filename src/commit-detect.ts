@@ -39,6 +39,8 @@ function segmentIsCommit(segment: string): boolean {
  * `git add . && git commit -m x` are all caught, while `git log`, `git show`
  * and `git commit-tree` are not.
  */
+// cerberus-allow: shallow-module — public entry point over segmentIsCommit; the
+// thin wrapper is the tested API surface (see commit-detect.test.ts).
 export function isGitCommit(command: string): boolean {
   return command.split(/&&|\|\||[;|&\n\r]/).some(segmentIsCommit);
 }

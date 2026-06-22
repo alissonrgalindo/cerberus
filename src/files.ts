@@ -13,6 +13,17 @@ export function toPosix(p: string): string {
   return p.split(sep).join('/');
 }
 
+/**
+ * True if a (posix) relative path lives under a build-output / dependency /
+ * VCS directory that's never worth analyzing — generated or vendored code, not
+ * something the author wrote. Mirrors the dirs `walkTsFiles` skips so the gate
+ * (which reads a staged/changed file list, not a walk) is consistent: a repo
+ * that commits its `dist/` bundle shouldn't have the gate grade the bundle.
+ */
+export function isBuildArtifactPath(relPosixPath: string): boolean {
+  return relPosixPath.split('/').some((segment) => ALWAYS_SKIP.has(segment));
+}
+
 /** Builds a matcher that returns true when a (posix) relative path matches any ignore glob. */
 export function makeIgnoreMatcher(patterns: string[]): (relPosixPath: string) => boolean {
   const isMatch = picomatch(patterns, { dot: true });

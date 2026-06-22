@@ -101,6 +101,9 @@ var ALWAYS_SKIP = /* @__PURE__ */ new Set(["node_modules", ".git", "dist", ".nex
 function toPosix(p) {
   return p.split(sep).join("/");
 }
+function isBuildArtifactPath(relPosixPath) {
+  return relPosixPath.split("/").some((segment) => ALWAYS_SKIP.has(segment));
+}
 function makeIgnoreMatcher(patterns) {
   const isMatch = picomatch(patterns, { dot: true });
   return (relPosixPath) => isMatch(relPosixPath);
@@ -2951,7 +2954,10 @@ async function performCheck(opts) {
     }
   };
   const isIgnored = makeIgnoreMatcher(fullConfig.ignore);
-  const ignoredRel = (abs) => isIgnored(relKey(cwd, abs));
+  const skipQuality = (abs) => {
+    const rel = relKey(cwd, abs);
+    return isIgnored(rel) || isBuildArtifactPath(rel);
+  };
   const securityConfig = {
     ...config,
     preCommit: {
@@ -2978,26 +2984,26 @@ async function performCheck(opts) {
   const pyFiles = files.filter(isPyAnalyzable);
   for (const abs of tsFiles) {
     const rel = relKey(cwd, abs);
-    const ignored = ignoredRel(abs);
+    const qualitySkipped = skipQuality(abs);
     const report = await analyzeFile(
       rel,
       getFileContent(abs),
-      ignored ? securityConfig : config,
-      ignored ? void 0 : baseline?.files[rel]
+      qualitySkipped ? securityConfig : config,
+      qualitySkipped ? void 0 : baseline?.files[rel]
     );
     reports.push(report);
   }
   for (const abs of pyFiles) {
     const rel = relKey(cwd, abs);
     reports.push(
-      await analyzePythonFile(rel, getFileContent(abs), ignoredRel(abs) ? securityConfig : config)
+      await analyzePythonFile(rel, getFileContent(abs), skipQuality(abs) ? securityConfig : config)
     );
   }
   const notes = [];
   const enabled = new Set(config.preCommit.enabled);
   const setViolations = [];
   if (opts.mode === "pre-commit") {
-    const tsQualityFiles = tsFiles.filter((f) => !ignoredRel(f));
+    const tsQualityFiles = tsFiles.filter((f) => !skipQuality(f));
     if (enabled.has("duplication")) {
       setViolations.push(...analyzeDuplication(tsQualityFiles, cwd, config));
     }

@@ -21,7 +21,9 @@ function initRepo(dir: string): void {
 }
 
 const ANY_FILE = 'export function f(x: any): any { return x; }\n';
-const SECRET_FILE = `export const k = 'sk-ant-leakedleakedleakedleakedleaked';\n`;
+// Assembled at runtime so this test file doesn't itself trip secret-in-diff.
+const FAKE_ANTHROPIC_KEY = `sk-ant-${'leaked'.repeat(6)}`;
+const SECRET_FILE = `export const k = '${FAKE_ANTHROPIC_KEY}';\n`;
 
 describe('config.ignore is honored by the gate (e2e)', () => {
   let dir: string;

@@ -98,8 +98,9 @@ jobs:
 ## 6. Smoke-test
 
 ```bash
-# should fail with secret-in-diff:
-echo 'const k = "sk-ant-test1234567890test1234567890";' > smoke.ts
+# should fail with secret-in-diff (the key is generated so this snippet
+# itself carries no literal token):
+echo "const k = \"sk-ant-$(openssl rand -hex 20)\";" > smoke.ts
 git add smoke.ts && git commit -m "smoke" # → blocked
 git rm --cached smoke.ts && rm smoke.ts
 ```

@@ -16,7 +16,7 @@ Set up code-quality-gate in the current repository, end to end. Follow these ste
 
 6. **Add the CI gate.** Create `.github/workflows/cerberus.yml` running `pnpm exec cerberus check --base "origin/${{ github.base_ref }}" --format github` on `pull_request`, with `pnpm install --frozen-lockfile` first, `fetch-depth: 0` on checkout, and Node 20. If the repo uses another CI system, adapt the same command.
 
-7. **Smoke-test:** create a throwaway file containing `const k = "sk-ant-test1234567890test1234567890";` (or `eval(x)` in a `.py`), stage it, attempt a commit, and confirm the gate blocks it. Then remove the file. Report the result.
+7. **Smoke-test:** create a throwaway file containing a fake Anthropic key — e.g. `const k = "sk-ant-" + 30 random chars` (or `eval(x)` in a `.py`), stage it, attempt a commit, and confirm the gate blocks it. Then remove the file. Report the result.
 
 8. **Commit** the config, baseline, workflow, and `.claude/settings.json` with message `chore: wire cerberus`.
 

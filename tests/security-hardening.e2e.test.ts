@@ -27,8 +27,11 @@ function initRepo(dir: string): void {
   git(dir, ['config', 'user.name', 'test']);
 }
 
+// Assembled at runtime so this test file doesn't itself trip secret-in-diff
+// when Cerberus scans its own repo (the literal token never appears in source).
+const FAKE_ANTHROPIC_KEY = `sk-ant-${'leaked'.repeat(6)}`;
 const SECRET_FILE = `export const config = {
-  apiKey: 'sk-ant-leakedleakedleakedleakedleaked',
+  apiKey: '${FAKE_ANTHROPIC_KEY}',
 };
 `;
 
