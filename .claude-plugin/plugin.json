@@ -1,6 +1,6 @@
 {
   "name": "cerberus",
-  "version": "0.2.0",
+  "version": "0.4.0",
   "description": "Cerberus — deterministic quality & security gate for AI-agent generated code. Validates complexity, type-safety, security, coverage, and duplication. Detects baseline drift and supports Husky.",
   "author": {
     "name": "Alison Galindo"

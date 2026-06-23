@@ -62,7 +62,7 @@ pnpm exec cerberus install-hooks
 git commit -m "..."
 ```
 
-Or, in Claude Code, install the plugin instead: `/plugin install code-quality-gate`.
+Or, in Claude Code, install the plugin instead: `/plugin install cerberus`.
 
 ## Docs
 

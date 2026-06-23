@@ -21,7 +21,7 @@ pnpm add -D github:alissonrgalindo/cerberus#v0.4.0
 
 The prebuilt `dist/` is committed, so there is no build step on install.
 Run the CLI through your package manager: `pnpm exec cerberus <cmd>` (or `npx cerberus <cmd>` resolves to the **local** install once it's a dependency).
-Claude Code plugin users can instead `/plugin install code-quality-gate` and skip the dependency.
+Claude Code plugin users can instead `/plugin install cerberus` and skip the dependency.
 
 ## 2. Create the config
 

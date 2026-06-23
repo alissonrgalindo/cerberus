@@ -2,7 +2,7 @@
 description: Wire the quality gate into this project (config, baseline, hooks, CI)
 ---
 
-Set up code-quality-gate in the current repository, end to end. Follow these steps in order — full reference in the plugin's INSTALL.md.
+Set up Cerberus in the current repository, end to end. Follow these steps in order — full reference in the plugin's INSTALL.md.
 
 1. **Detect the stack.** Check for `package.json` (TypeScript/Node), `pyproject.toml`/`requirements.txt` (Python), or both. Confirm this is a git repo (`git rev-parse`); if not, stop and ask.
 
