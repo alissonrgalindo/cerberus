@@ -17,7 +17,8 @@ import { createSourceFile } from './ts-project.js';
  * Tagged templates (db.execute(sql`...`)) are SAFE — the tag parameterizes the
  * values — and are never flagged. Plain string literals are safe too.
  *
- * Suppression: `// quality-gate-allow: injection` on the same line.
+ * Suppression: `// cerberus-allow: injection` on the same line. The legacy
+ * `quality-gate-allow` spelling is still accepted.
  */
 
 const SUPPRESSION = /(?:cerberus|quality-gate)-allow:\s*injection\b/;
@@ -207,7 +208,7 @@ const SUGGESTIONS: Record<string, string> = {
   shell:
     'Shell injection: pass arguments as an array (execFile(cmd, [args])) or use execa without a shell. Never interpolate user/runtime data into a command string.',
   sql: 'SQL injection: use a parameterized query or a tagged template (db.execute(sql`... ${x} ...`)) so values are bound, not concatenated.',
-  xss: 'XSS: sanitize with DOMPurify.sanitize(...) before injecting HTML, or render as text. Suppress with `// quality-gate-allow: injection` only if the content is provably static.',
+  xss: 'XSS: sanitize with DOMPurify.sanitize(...) before injecting HTML, or render as text. Suppress with `// cerberus-allow: injection` only if the content is provably static.',
 };
 
 export async function analyzeInjection(input: AnalyzerInput): Promise<AnalyzerResult> {

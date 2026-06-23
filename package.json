@@ -1,11 +1,12 @@
 {
   "name": "cerberus",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "private": true,
   "license": "MIT",
   "author": "alissonrgalindo",
   "description": "Cerberus — deterministic quality & security gate for AI-agent generated code",
   "type": "module",
+  "packageManager": "pnpm@10.33.0",
   "bin": {
     "cerberus": "./dist/cli.js",
     "quality-gate": "./dist/cli.js"
@@ -16,30 +17,35 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "test": "vitest",
+    "test": "vitest --run",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
     "pack:plugin": "pnpm run build && rm -f cerberus.plugin && zip -rq cerberus.plugin .claude-plugin hooks skills commands dist README.md INSTALL.md"
   },
+  "pnpm": {
+    "overrides": {
+      "esbuild": "0.28.1"
+    }
+  },
   "dependencies": {
-    "cognitive-complexity-ts": "^0.8.1",
-    "ts-morph": "^23.0.0",
-    "jscpd": "^4.0.1",
-    "husky": "^9.1.0",
-    "lint-staged": "^15.2.0",
-    "yargs": "^17.7.2",
     "chalk": "^5.3.0",
+    "cognitive-complexity-ts": "^0.8.1",
     "execa": "^9.0.0",
-    "picomatch": "^4.0.2"
+    "husky": "^9.1.0",
+    "jscpd": "^4.0.1",
+    "lint-staged": "^15.2.0",
+    "picomatch": "^4.0.2",
+    "ts-morph": "^23.0.0",
+    "yargs": "^17.7.2"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
-    "@types/yargs": "^17.0.32",
     "@types/picomatch": "^3.0.1",
+    "@types/yargs": "^17.0.32",
+    "eslint": "^10.5.0",
     "tsup": "^8.0.0",
     "typescript": "^5.4.0",
-    "vitest": "^1.5.0",
-    "eslint": "^9.0.0",
-    "typescript-eslint": "^8.0.0"
+    "typescript-eslint": "^8.62.0",
+    "vitest": "^3.2.6"
   }
 }

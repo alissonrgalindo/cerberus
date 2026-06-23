@@ -590,7 +590,7 @@ async function analyzePySilentCatch(input) {
     location: `L${f.line}`,
     current: 1,
     threshold: 0,
-    suggestion: `${f.detail}. Re-raise (\`raise\`), return a typed error, or hand it to your error reporter. Suppress with \`# quality-gate-allow: silent-catch\` only when ignoring is provably safe.`
+    suggestion: `${f.detail}. Re-raise (\`raise\`), return a typed error, or hand it to your error reporter. Suppress with \`# cerberus-allow: silent-catch\` only when ignoring is provably safe.`
   }));
   return { passed: violations.length === 0, violations, metrics: { silentCatchCount: findings.length } };
 }
@@ -1231,7 +1231,7 @@ function analyzeSecretInDiff(files, cwd, readContent = readFromDisk3) {
           current: 1,
           threshold: 0,
           severity: "security",
-          suggestion: `${pattern.describe(m)} detected. Rotate the credential immediately (it's effectively public the moment a commit lands), move it to your secret manager / .env (gitignored), and reference via process.env. Suppress per-line with \`// quality-gate-allow: secret\` for test fixtures.`
+          suggestion: `${pattern.describe(m)} detected. Rotate the credential immediately (it's effectively public the moment a commit lands), move it to your secret manager / .env (gitignored), and reference via process.env. Suppress per-line with \`// cerberus-allow: secret\` for test fixtures.`
         };
         out.push({ file: rel, violation });
       }
@@ -2046,7 +2046,7 @@ var SUGGESTIONS = {
   eval: "Code injection: never build executable code from data. Replace with a lookup table, JSON.parse, or explicit logic.",
   shell: "Shell injection: pass arguments as an array (execFile(cmd, [args])) or use execa without a shell. Never interpolate user/runtime data into a command string.",
   sql: "SQL injection: use a parameterized query or a tagged template (db.execute(sql`... ${x} ...`)) so values are bound, not concatenated.",
-  xss: "XSS: sanitize with DOMPurify.sanitize(...) before injecting HTML, or render as text. Suppress with `// quality-gate-allow: injection` only if the content is provably static."
+  xss: "XSS: sanitize with DOMPurify.sanitize(...) before injecting HTML, or render as text. Suppress with `// cerberus-allow: injection` only if the content is provably static."
 };
 async function analyzeInjection(input) {
   const findings = findInjections(input.filePath, input.fileContent);
@@ -2342,7 +2342,7 @@ async function analyzeShallowModule(input) {
     location: `${f.name}:${f.line}`,
     current: 1,
     threshold: 0,
-    suggestion: `"${f.name}" \u2014 ${f.reason}. Either inline the call at the caller (Ousterhout, *A Philosophy of Software Design* ch. 4), or move real abstraction inside (validation, error mapping, default values). Suppress with \`// quality-gate-allow: shallow-module\` if the indirection is intentional (e.g. testing seam).`
+    suggestion: `"${f.name}" \u2014 ${f.reason}. Either inline the call at the caller (Ousterhout, *A Philosophy of Software Design* ch. 4), or move real abstraction inside (validation, error mapping, default values). Suppress with \`// cerberus-allow: shallow-module\` if the indirection is intentional (e.g. testing seam).`
   }));
   return {
     passed: violations.length === 0,
@@ -3071,7 +3071,7 @@ async function runCheck(args) {
   const securityOnly = bypassActive();
   if (securityOnly) {
     process.stderr.write(
-      chalk2.dim("quality-gate: QUALITY_GATE_BYPASS=1 \u2014 quality checks skipped, security checks still enforced\n")
+      chalk2.dim("cerberus: CERBERUS_BYPASS=1 \u2014 quality checks skipped, security checks still enforced\n")
     );
   }
   const staged = !args.file && !args.base;
@@ -3106,7 +3106,7 @@ async function runClaudeHook() {
     )
   );
   process.stderr.write(
-    `quality-gate blocked this commit (${failing.length} file(s)):
+    `cerberus blocked this commit (${failing.length} file(s)):
 ${lines.join("\n")}
 ` + (hasSecurity ? "Security violations must be fixed \u2014 they cannot be bypassed or deferred.\n" : "Fix the violations above and retry the commit.\n")
   );
@@ -3133,7 +3133,7 @@ async function runClaudePostEditHook() {
     (f) => f.violations.map((v) => `  ${v.analyzer} ${v.location}: ${v.suggestion}`)
   );
   process.stderr.write(
-    `quality-gate found issues in the file you just edited (fix them now \u2014 the commit will be blocked otherwise):
+    `cerberus found issues in the file you just edited (fix them now \u2014 the commit will be blocked otherwise):
 ${lines.join("\n")}
 `
   );
@@ -3320,7 +3320,7 @@ function runDoctor(args) {
   };
   line(hasConfig, hasConfig ? `${CONFIG_FILE} found` : `${CONFIG_FILE} missing (using defaults)`);
   if (!baseline) {
-    line(false, `${BASELINE_FILE} missing \u2014 run "quality-gate baseline"`);
+    line(false, `${BASELINE_FILE} missing \u2014 run "cerberus baseline"`);
   } else {
     const total = Object.keys(baseline.files).length;
     line(true, `${BASELINE_FILE}: ${total} files`);
@@ -3329,16 +3329,16 @@ function runDoctor(args) {
     } else {
       line(
         false,
-        `${drifted.length} file(s) drifted from baseline \u2014 see "quality-gate drift"`
+        `${drifted.length} file(s) drifted from baseline \u2014 see "cerberus drift"`
       );
     }
   }
   if (hook.kind === "none") {
-    line(false, 'git pre-commit hook missing \u2014 run "quality-gate install-hooks"');
+    line(false, 'git pre-commit hook missing \u2014 run "cerberus install-hooks"');
   } else if (!hook.hasMarker) {
     line(
       false,
-      `pre-commit hook present (${hook.kind}: ${hook.path}) but quality-gate not wired \u2014 run "quality-gate install-hooks"`
+      `pre-commit hook present (${hook.kind}: ${hook.path}) but cerberus not wired \u2014 run "cerberus install-hooks"`
     );
   } else {
     line(true, `pre-commit hook installed (${hook.kind}: ${hook.path})`);
@@ -3367,7 +3367,7 @@ function runDoctor(args) {
     );
     process.exit(0);
   }
-  process.stdout.write(chalk2.bold("\nquality-gate doctor\n\n"));
+  process.stdout.write(chalk2.bold("\ncerberus doctor\n\n"));
   for (const l of lines) {
     process.stdout.write(`  ${l.good ? chalk2.green("\u2713") : chalk2.yellow("\u2022")} ${l.msg}
 `);
@@ -3448,14 +3448,14 @@ ${drifted.length} file(s) drifted
     );
   }
   process.stdout.write(
-    "\n" + chalk2.dim("Refresh: quality-gate refresh-baseline --all-drifted\n")
+    "\n" + chalk2.dim("Refresh: cerberus refresh-baseline --all-drifted\n")
   );
 }
 function runDiff(args) {
   const cwd = process.cwd();
   const baseline = loadBaseline(cwd);
   if (!baseline) {
-    process.stderr.write(chalk2.red('No baseline \u2014 run "quality-gate baseline" first.\n'));
+    process.stderr.write(chalk2.red('No baseline \u2014 run "cerberus baseline" first.\n'));
     process.exit(1);
   }
   const drift = listDrift(cwd);
@@ -3523,7 +3523,7 @@ function runDiff(args) {
   }
   process.stdout.write("\n");
 }
-await yargs(hideBin(process.argv)).scriptName("quality-gate").command(
+await yargs(hideBin(process.argv)).scriptName("cerberus").command(
   "check",
   "Run analyzers against staged files or a single file",
   (y) => y.option("file", { type: "string", describe: "Analyze a single file" }).option("staged", { type: "boolean", describe: "Analyze staged files" }).option("base", {

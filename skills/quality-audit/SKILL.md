@@ -5,7 +5,7 @@ description: Run a full code quality audit on the current project — complexity
 
 # Quality Audit
 
-Run `npx quality-gate audit --top 20` to see the worst files by complexity.
+Run `pnpm exec cerberus audit --top 20` to see the worst files by complexity.
 
 Then for the top 3 files:
 
@@ -17,6 +17,6 @@ Do NOT run refactors yourself unless the user explicitly asks. The deliverable i
 
 ## Useful commands
 
-- `npx quality-gate audit --top N` — worst N files by complexity.
-- `npx quality-gate check --file <path>` — detailed violations for one file.
-- `npx quality-gate doctor` — config/baseline/hook health and baseline drift.
+- `pnpm exec cerberus audit --top N` — worst N files by complexity.
+- `pnpm exec cerberus check --file <path>` — detailed violations for one file.
+- `pnpm exec cerberus doctor` — config/baseline/hook health and baseline drift.

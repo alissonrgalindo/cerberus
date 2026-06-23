@@ -34,7 +34,7 @@ Presets: `@cerberus/nextjs`, `@cerberus/monorepo-turborepo`, `@cerberus/node-cli
 
 The legacy binary name `quality-gate` is kept as an alias for every command.
 
-Slash commands (`/quality-check`, `/quality-baseline`) and the `/quality-audit` skill are available when installed as a Claude Code plugin.
+Slash commands (`/quality-check`, `/quality-baseline`) and the `cerberus` / `quality-audit` skills are available when installed as a Claude Code plugin.
 
 ## Hooks
 

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-06-22T19:47:26.192Z",
+  "generatedAt": "2026-06-23T14:48:53.850Z",
   "files": {
     "eslint.config.js": {
       "fileHash": "ce2a45e7fad3936d27b4023caffd84202c95443996a3bca5a4e98a87cf9c7b67",
@@ -38,7 +38,7 @@
       }
     },
     "hooks/claude-pretooluse.mjs": {
-      "fileHash": "30ebae6506cbfa14e811ca88e7c4c5dc79a7c8760961c58c362bd8b09dcacc36",
+      "fileHash": "9cccb222af4270c652d0b4e844426efae2db71e98b3acf2f90a3d67351b07406",
       "metrics": {
         "cognitiveComplexity": {
           "max": 0,
@@ -433,7 +433,7 @@
       }
     },
     "src/analyzers/injection.ts": {
-      "fileHash": "90533d054ee2dcdeaa739a56cdf7d47c4251859c7ccc967b3d8f8f06dcf3d49b",
+      "fileHash": "44483c74b85f7a05a1af706144f44d2ac65172e07a5737f064d5e0c18244b72b",
       "metrics": {
         "cognitiveComplexity": {
           "max": 17,
@@ -452,9 +452,9 @@
             "checkDangerousHtml": 17,
             "isSuppressed": 1,
             "findInjections": 3,
-            "<anonymous>:202": 0,
+            "<anonymous>:203": 0,
             "analyzeInjection": 1,
-            "<anonymous>:215": 1
+            "<anonymous>:216": 1
           }
         },
         "cyclomaticComplexity": {
@@ -473,9 +473,9 @@
             "checkDangerousHtml": 14,
             "isSuppressed": 2,
             "findInjections": 4,
-            "<anonymous>:202": 1,
+            "<anonymous>:203": 1,
             "analyzeInjection": 1,
-            "<anonymous>:215": 2
+            "<anonymous>:216": 2
           }
         },
         "typeSafety": {
@@ -502,9 +502,9 @@
             "checkDangerousHtml": 20,
             "isSuppressed": 4,
             "findInjections": 17,
-            "<anonymous>:202": 1,
+            "<anonymous>:203": 1,
             "analyzeInjection": 17,
-            "<anonymous>:215": 1
+            "<anonymous>:216": 1
           }
         },
         "parameterCount": {
@@ -523,9 +523,9 @@
             "checkDangerousHtml": 2,
             "isSuppressed": 2,
             "findInjections": 2,
-            "<anonymous>:202": 1,
+            "<anonymous>:203": 1,
             "analyzeInjection": 1,
-            "<anonymous>:215": 1
+            "<anonymous>:216": 1
           }
         },
         "silentCatch": {
@@ -781,7 +781,7 @@
       }
     },
     "src/analyzers/python.ts": {
-      "fileHash": "a5bd110c7228acfbf7e16fb6c94f43b7b28982b2cd0b1cca9f49782270e47b71",
+      "fileHash": "b62a96d8be60cdeb31e093e60d0125d85e49a249141808ec17ec3cab9fbc516b",
       "metrics": {
         "cognitiveComplexity": {
           "max": 34,
@@ -789,25 +789,25 @@
             "SUPPRESS": 0,
             "Line": 0,
             "parseLines": 14,
-            "<anonymous>:27": 14,
+            "<anonymous>:28": 14,
             "isBlankOrComment": 0,
             "PyFinding": 0,
             "findPySilentCatches": 25,
-            "<anonymous>:85": 0,
-            "<anonymous>:86": 1,
+            "<anonymous>:86": 0,
+            "<anonymous>:87": 1,
             "analyzePySilentCatch": 0,
-            "<anonymous>:98": 0,
+            "<anonymous>:99": 0,
             "isDynamicPyArg": 7,
             "findPyInjections": 17,
             "analyzePyInjection": 0,
-            "<anonymous>:189": 0,
+            "<anonymous>:190": 0,
             "normalizePyName": 0,
             "extractDeclaredPyDeps": 34,
             "collectPyDeclaredDeps": 19,
             "isLocalPyModule": 10,
             "analyzePyHallucinatedImport": 24,
             "check": 9,
-            "<anonymous>:378": 0
+            "<anonymous>:379": 0
           }
         },
         "cyclomaticComplexity": {
@@ -815,24 +815,24 @@
           "perFunction": {
             "SUPPRESS": 1,
             "parseLines": 1,
-            "<anonymous>:27": 8,
+            "<anonymous>:28": 8,
             "isBlankOrComment": 1,
             "findPySilentCatches": 11,
-            "<anonymous>:85": 1,
-            "<anonymous>:86": 2,
+            "<anonymous>:86": 1,
+            "<anonymous>:87": 2,
             "analyzePySilentCatch": 1,
-            "<anonymous>:98": 1,
+            "<anonymous>:99": 1,
             "isDynamicPyArg": 8,
             "findPyInjections": 9,
             "analyzePyInjection": 1,
-            "<anonymous>:189": 1,
+            "<anonymous>:190": 1,
             "normalizePyName": 1,
             "extractDeclaredPyDeps": 17,
             "collectPyDeclaredDeps": 8,
             "isLocalPyModule": 7,
             "analyzePyHallucinatedImport": 9,
             "check": 7,
-            "<anonymous>:378": 1
+            "<anonymous>:379": 1
           }
         },
         "typeSafety": {
@@ -848,24 +848,24 @@
           "perFunction": {
             "SUPPRESS": 1,
             "parseLines": 20,
-            "<anonymous>:27": 18,
+            "<anonymous>:28": 18,
             "isBlankOrComment": 3,
             "findPySilentCatches": 34,
-            "<anonymous>:85": 1,
             "<anonymous>:86": 1,
+            "<anonymous>:87": 1,
             "analyzePySilentCatch": 11,
-            "<anonymous>:98": 1,
+            "<anonymous>:99": 1,
             "isDynamicPyArg": 15,
             "findPyInjections": 20,
             "analyzePyInjection": 12,
-            "<anonymous>:189": 1,
+            "<anonymous>:190": 1,
             "normalizePyName": 3,
             "extractDeclaredPyDeps": 47,
             "collectPyDeclaredDeps": 23,
             "isLocalPyModule": 9,
             "analyzePyHallucinatedImport": 50,
             "check": 8,
-            "<anonymous>:378": 1
+            "<anonymous>:379": 1
           }
         },
         "parameterCount": {
@@ -873,24 +873,24 @@
           "perFunction": {
             "SUPPRESS": 1,
             "parseLines": 1,
-            "<anonymous>:27": 1,
+            "<anonymous>:28": 1,
             "isBlankOrComment": 1,
             "findPySilentCatches": 1,
-            "<anonymous>:85": 1,
             "<anonymous>:86": 1,
+            "<anonymous>:87": 1,
             "analyzePySilentCatch": 1,
-            "<anonymous>:98": 1,
+            "<anonymous>:99": 1,
             "isDynamicPyArg": 1,
             "findPyInjections": 1,
             "analyzePyInjection": 1,
-            "<anonymous>:189": 1,
+            "<anonymous>:190": 1,
             "normalizePyName": 1,
             "extractDeclaredPyDeps": 2,
             "collectPyDeclaredDeps": 1,
             "isLocalPyModule": 3,
             "analyzePyHallucinatedImport": 1,
             "check": 2,
-            "<anonymous>:378": 1
+            "<anonymous>:379": 1
           }
         },
         "silentCatch": {
@@ -978,7 +978,7 @@
       }
     },
     "src/analyzers/secret-in-diff.ts": {
-      "fileHash": "7cba2596190e8c8e7904bbf42f12b725a59c6223532485650b72ac01a14cfa41",
+      "fileHash": "857ca7fdea9d7805b4ac3e325cf7b9619950d2e3f4ac5001d4f04e026f5b94be",
       "metrics": {
         "cognitiveComplexity": {
           "max": 21,
@@ -1042,7 +1042,7 @@
       }
     },
     "src/analyzers/shallow-module.ts": {
-      "fileHash": "a994dd0bd9019a00b76bd950fc4f90d838a560b6a975a2590545128ef2ba7f38",
+      "fileHash": "21e7eae0a2886de8c5664f68c9ef8e51e438643bcb3465aab3bc047917a522c0",
       "metrics": {
         "cognitiveComplexity": {
           "max": 25,
@@ -1054,7 +1054,7 @@
             "findShallowModules": 25,
             "measureShallowModule": 0,
             "analyzeShallowModule": 2,
-            "<anonymous>:143": 0
+            "<anonymous>:144": 0
           }
         },
         "cyclomaticComplexity": {
@@ -1065,7 +1065,7 @@
             "findShallowModules": 14,
             "measureShallowModule": 1,
             "analyzeShallowModule": 3,
-            "<anonymous>:143": 1
+            "<anonymous>:144": 1
           }
         },
         "typeSafety": {
@@ -1084,7 +1084,7 @@
             "findShallowModules": 36,
             "measureShallowModule": 3,
             "analyzeShallowModule": 24,
-            "<anonymous>:143": 1
+            "<anonymous>:144": 1
           }
         },
         "parameterCount": {
@@ -1095,7 +1095,7 @@
             "findShallowModules": 2,
             "measureShallowModule": 2,
             "analyzeShallowModule": 1,
-            "<anonymous>:143": 1
+            "<anonymous>:144": 1
           }
         },
         "silentCatch": {
@@ -1107,7 +1107,7 @@
       }
     },
     "src/analyzers/silent-catch.ts": {
-      "fileHash": "54eeedd18f2bc5cbe72a9b7b15e61c18ef656e74889facf9d3535ad458c9c95d",
+      "fileHash": "0552986d602995207987441a67f27e7d1290be90bbea22f0d44c5fda6b291d28",
       "metrics": {
         "cognitiveComplexity": {
           "max": 4,
@@ -1478,7 +1478,7 @@
       }
     },
     "src/cli.ts": {
-      "fileHash": "eb4114e60b2d1e6c5d7c63166a3c86ac0a352e588929b029fcb6cbcd4c669f6e",
+      "fileHash": "0f6d8e8f62d14a0bf559819965e9eb489eadeadcfe05daa825afa5e07077a3d6",
       "metrics": {
         "cognitiveComplexity": {
           "max": 48,
@@ -1917,7 +1917,7 @@
       }
     },
     "src/defaults.ts": {
-      "fileHash": "610e366874a688d43124e53619e1d607daadbb1291e005553d3614ed0428081b",
+      "fileHash": "b918abc95c28de4ef056885b5e89141ad1d2a6a415e425615c04d000ef9842bf",
       "metrics": {
         "cognitiveComplexity": {
           "max": 0,

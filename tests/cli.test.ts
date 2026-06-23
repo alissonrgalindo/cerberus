@@ -50,7 +50,14 @@ beforeAll(() => {
   }
 }, 120_000);
 
-describe('quality-gate CLI (e2e)', () => {
+describe('cerberus CLI (e2e)', () => {
+  it('uses cerberus as the canonical help command name', () => {
+    const res = run(REPO_ROOT, ['--help']);
+    expect(res.exitCode).toBe(0);
+    expect(res.stdout).toContain('cerberus <command>');
+    expect(res.stdout).not.toContain('quality-gate <command>');
+  });
+
   it('baseline writes a valid baseline file', () => {
     const dir = makeProject();
     const res = run(dir, ['baseline']);
@@ -103,7 +110,7 @@ describe('quality-gate CLI (e2e)', () => {
     run(dir, ['baseline']);
     const res = run(dir, ['doctor']);
     expect(res.exitCode).toBe(0);
-    expect(res.stdout).toContain('quality-gate doctor');
+    expect(res.stdout).toContain('cerberus doctor');
   });
 
   it('anti-doom-loop: 3rd staged pre-commit attempt passes with debt', () => {

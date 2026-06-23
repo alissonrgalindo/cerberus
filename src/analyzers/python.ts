@@ -15,7 +15,8 @@ import type { AnalyzerInput, AnalyzerResult, Violation } from '../types.js';
  *
  * v1 is presence-based (no per-function baseline); complexity metrics for
  * Python can layer on later. Suppressions mirror the TS analyzers:
- * `# quality-gate-allow: silent-catch` / `injection` / `hallucinated-import`.
+ * `# cerberus-allow: silent-catch` / `injection` / `hallucinated-import`.
+ * The legacy `quality-gate-allow` spelling is still accepted.
  */
 
 const SUPPRESS = (kind: string): RegExp =>
@@ -100,7 +101,7 @@ export async function analyzePySilentCatch(input: AnalyzerInput): Promise<Analyz
     location: `L${f.line}`,
     current: 1,
     threshold: 0,
-    suggestion: `${f.detail}. Re-raise (\`raise\`), return a typed error, or hand it to your error reporter. Suppress with \`# quality-gate-allow: silent-catch\` only when ignoring is provably safe.`,
+    suggestion: `${f.detail}. Re-raise (\`raise\`), return a typed error, or hand it to your error reporter. Suppress with \`# cerberus-allow: silent-catch\` only when ignoring is provably safe.`,
   }));
   return { passed: violations.length === 0, violations, metrics: { silentCatchCount: findings.length } };
 }

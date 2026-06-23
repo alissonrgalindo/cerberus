@@ -1,7 +1,7 @@
-# Self-CI for the quality-gate repo: tests, typecheck, and the gate run on
+# Self-CI for the Cerberus repo: tests, lint, typecheck, and the gate run on
 # every PR. Consumers: copy the "gate" job and replace the build steps with
 # `pnpm exec cerberus check --base "origin/${{ github.base_ref }}"`.
-name: quality-gate
+name: cerberus
 
 on:
   pull_request:
@@ -15,14 +15,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: 10.33.0
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
       - run: pnpm typecheck
-      - run: pnpm test -- --run
+      - run: pnpm test
 
   gate:
     # The PR-blocking quality/security gate. Pre-commit hooks are advisory
@@ -35,7 +36,7 @@ jobs:
           fetch-depth: 0 # need the merge-base for --base
       - uses: pnpm/action-setup@v4
         with:
-          version: 10
+          version: 10.33.0
       - uses: actions/setup-node@v4
         with:
           node-version: 20

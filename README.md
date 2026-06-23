@@ -47,7 +47,7 @@ Cerberus is distributed as a **git dependency** (not on npm — the bare `cerber
 
 ```bash
 # 1. Add Cerberus (prebuilt dist is committed — no build step)
-pnpm add -D github:alissonrgalindo/cerberus#v0.4.0
+pnpm add -D github:alissonrgalindo/cerberus#v0.4.1
 
 # 2. Pick a preset
 echo '{ "extends": "@cerberus/nextjs" }' > .cerberus.json
@@ -62,7 +62,7 @@ pnpm exec cerberus install-hooks
 git commit -m "..."
 ```
 
-Or, in Claude Code, install the plugin instead: `/plugin install cerberus`.
+Or, in Claude Code, install the plugin instead: `/plugin install cerberus`; it includes the Cerberus agent skill and quality slash commands.
 
 ## Docs
 

@@ -6,7 +6,7 @@ Set up Cerberus in the current repository, end to end. Follow these steps in ord
 
 1. **Detect the stack.** Check for `package.json` (TypeScript/Node), `pyproject.toml`/`requirements.txt` (Python), or both. Confirm this is a git repo (`git rev-parse`); if not, stop and ask.
 
-2. **Install Cerberus** if it isn't already a dependency: `pnpm add -D github:alissonrgalindo/cerberus#v0.4.0` (or the npm/yarn equivalent). The prebuilt `dist/` is committed, so there's no build step. (Skip this if the project uses the Claude Code plugin instead.)
+2. **Install Cerberus** if it isn't already a dependency: `pnpm add -D github:alissonrgalindo/cerberus#v0.4.1` (or the npm/yarn equivalent). The prebuilt `dist/` is committed, so there's no build step. (Skip this if the project uses the Claude Code plugin instead.)
 
 3. **Create `.cerberus.json`** at the repo root if missing. Pick the preset by stack: Next.js app → `@cerberus/nextjs`; turborepo monorepo → `@cerberus/monorepo-turborepo`; anything else (including Python-only) → `@cerberus/node-cli`. Add `ignore` globs for test/generated/migration paths you see in the repo (quality only — security still runs on them). Do not list security analyzers in `preCommit.enabled` overrides — they are always on regardless.
 

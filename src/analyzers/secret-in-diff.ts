@@ -24,9 +24,10 @@ import type { SetViolation, Violation } from '../types.js';
  * is not `.env.example` / `.env.sample` / `.env.template`) is flagged at L1 —
  * env files should never be committed regardless of contents.
  *
- * Suppression: a `// quality-gate-allow: secret` (or `# quality-gate-allow: secret`)
- * line comment on the same line as the match skips it. Use this for test
- * fixtures with intentionally-fake-but-shaped tokens.
+ * Suppression: a `// cerberus-allow: secret` (or `# cerberus-allow: secret`)
+ * line comment on the same line as the match skips it. The legacy
+ * `quality-gate-allow` spelling is still accepted. Use this for test fixtures
+ * with intentionally-fake-but-shaped tokens.
  */
 
 const SUPPRESSION = /(?:cerberus|quality-gate)-allow:\s*secret\b/;
@@ -182,7 +183,7 @@ export function analyzeSecretInDiff(
           current: 1,
           threshold: 0,
           severity: 'security',
-          suggestion: `${pattern.describe(m)} detected. Rotate the credential immediately (it's effectively public the moment a commit lands), move it to your secret manager / .env (gitignored), and reference via process.env. Suppress per-line with \`// quality-gate-allow: secret\` for test fixtures.`,
+          suggestion: `${pattern.describe(m)} detected. Rotate the credential immediately (it's effectively public the moment a commit lands), move it to your secret manager / .env (gitignored), and reference via process.env. Suppress per-line with \`// cerberus-allow: secret\` for test fixtures.`,
         };
         out.push({ file: rel, violation });
       }

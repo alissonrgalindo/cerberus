@@ -65,7 +65,7 @@ export function measureSilentCatch(filePath: string, fileContent: string): numbe
 
 export async function analyzeSilentCatch(input: AnalyzerInput): Promise<AnalyzerResult> {
   const findings = findSilentCatches(input.filePath, input.fileContent);
-  // Delta vs baseline: legacy empty catches captured at `quality-gate baseline` time are
+  // Delta vs baseline: legacy empty catches captured at `cerberus baseline` time are
   // grandfathered; we only block when a file gains MORE silent catches than its snapshot.
   // A new file (no baseline) is held to the absolute threshold (every finding flagged).
   const baseCount = input.fileBaseline?.metrics.silentCatch?.count ?? 0;

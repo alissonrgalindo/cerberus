@@ -1,6 +1,6 @@
 import type { Config } from './types.js';
 
-/** Built-in default config. Phase 2's config loader merges user `.quality-gate.json` over this. */
+/** Built-in default config. The config loader merges user `.cerberus.json` over this. */
 export function defaultConfig(): Config {
   return {
     thresholds: {

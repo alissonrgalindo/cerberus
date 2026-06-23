@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Claude Code PreToolUse(Bash) entrypoint for plugin.json registration.
-// Forwards the hook payload (stdin) to `quality-gate claude-hook`, which
+// Forwards the hook payload (stdin) to `cerberus claude-hook`, which
 // blocks the commit (exit 2) when the gate fails.
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';

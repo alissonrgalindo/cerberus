@@ -76,7 +76,7 @@ function bypassActive(): boolean {
  * Core check shared by the CLI, the git hook and the Claude Code hook.
  * Runs analyzers over the given files and, in pre-commit mode, applies the
  * anti-doom-loop: after maxRefactorAttempts the gate lets the commit through,
- * injecting `// TODO: quality-gate(...)` flags and re-staging the files.
+ * injecting `// TODO: cerberus(...)` flags and re-staging the files.
  *
  * Security-tier analyzers are exempt from every escape hatch: the doom-loop
  * never passes them through, and `securityOnly` mode (used when a bypass is
@@ -256,12 +256,12 @@ async function runCheck(args: {
 }): Promise<void> {
   const cwd = process.cwd();
 
-  // QUALITY_GATE_BYPASS downgrades the gate to security-only instead of
+  // CERBERUS_BYPASS downgrades the gate to security-only instead of
   // disabling it: quality debt is bypassable, leaked secrets are not.
   const securityOnly = bypassActive();
   if (securityOnly) {
     process.stderr.write(
-      chalk.dim('quality-gate: QUALITY_GATE_BYPASS=1 — quality checks skipped, security checks still enforced\n'),
+      chalk.dim('cerberus: CERBERUS_BYPASS=1 — quality checks skipped, security checks still enforced\n'),
     );
   }
 
@@ -321,7 +321,7 @@ async function runClaudeHook(): Promise<void> {
   // Deliberately NO bypass instructions here: this message is read by the
   // agent, and telling a blocked agent how to disable the gate defeats it.
   process.stderr.write(
-    `quality-gate blocked this commit (${failing.length} file(s)):\n${lines.join('\n')}\n` +
+    `cerberus blocked this commit (${failing.length} file(s)):\n${lines.join('\n')}\n` +
       (hasSecurity
         ? 'Security violations must be fixed — they cannot be bypassed or deferred.\n'
         : 'Fix the violations above and retry the commit.\n'),
@@ -366,7 +366,7 @@ async function runClaudePostEditHook(): Promise<void> {
     f.violations.map((v) => `  ${v.analyzer} ${v.location}: ${v.suggestion}`),
   );
   process.stderr.write(
-    `quality-gate found issues in the file you just edited (fix them now — the commit will be blocked otherwise):\n${lines.join('\n')}\n`,
+    `cerberus found issues in the file you just edited (fix them now — the commit will be blocked otherwise):\n${lines.join('\n')}\n`,
   );
   process.exit(2); // feed stderr back to the agent
 }
@@ -568,7 +568,7 @@ function runDoctor(args: { format?: string; verbose?: boolean }): void {
   line(hasConfig, hasConfig ? `${CONFIG_FILE} found` : `${CONFIG_FILE} missing (using defaults)`);
 
   if (!baseline) {
-    line(false, `${BASELINE_FILE} missing — run "quality-gate baseline"`);
+    line(false, `${BASELINE_FILE} missing — run "cerberus baseline"`);
   } else {
     const total = Object.keys(baseline.files).length;
     line(true, `${BASELINE_FILE}: ${total} files`);
@@ -577,17 +577,17 @@ function runDoctor(args: { format?: string; verbose?: boolean }): void {
     } else {
       line(
         false,
-        `${drifted.length} file(s) drifted from baseline — see "quality-gate drift"`,
+        `${drifted.length} file(s) drifted from baseline — see "cerberus drift"`,
       );
     }
   }
 
   if (hook.kind === 'none') {
-    line(false, 'git pre-commit hook missing — run "quality-gate install-hooks"');
+    line(false, 'git pre-commit hook missing — run "cerberus install-hooks"');
   } else if (!hook.hasMarker) {
     line(
       false,
-      `pre-commit hook present (${hook.kind}: ${hook.path}) but quality-gate not wired — run "quality-gate install-hooks"`,
+      `pre-commit hook present (${hook.kind}: ${hook.path}) but cerberus not wired — run "cerberus install-hooks"`,
     );
   } else {
     line(true, `pre-commit hook installed (${hook.kind}: ${hook.path})`);
@@ -620,7 +620,7 @@ function runDoctor(args: { format?: string; verbose?: boolean }): void {
     process.exit(0);
   }
 
-  process.stdout.write(chalk.bold('\nquality-gate doctor\n\n'));
+  process.stdout.write(chalk.bold('\ncerberus doctor\n\n'));
   for (const l of lines) {
     process.stdout.write(`  ${l.good ? chalk.green('✓') : chalk.yellow('•')} ${l.msg}\n`);
   }
@@ -703,7 +703,7 @@ function runDrift(args: { format?: string }): void {
     );
   }
   process.stdout.write(
-    '\n' + chalk.dim('Refresh: quality-gate refresh-baseline --all-drifted\n'),
+    '\n' + chalk.dim('Refresh: cerberus refresh-baseline --all-drifted\n'),
   );
 }
 
@@ -711,7 +711,7 @@ function runDiff(args: { format?: string }): void {
   const cwd = process.cwd();
   const baseline = loadBaseline(cwd);
   if (!baseline) {
-    process.stderr.write(chalk.red('No baseline — run "quality-gate baseline" first.\n'));
+    process.stderr.write(chalk.red('No baseline — run "cerberus baseline" first.\n'));
     process.exit(1);
   }
   const drift = listDrift(cwd);
@@ -785,7 +785,7 @@ function runDiff(args: { format?: string }): void {
 }
 
 await yargs(hideBin(process.argv))
-  .scriptName('quality-gate')
+  .scriptName('cerberus')
   .command(
     'check',
     'Run analyzers against staged files or a single file',

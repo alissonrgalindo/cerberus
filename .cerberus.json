@@ -1,0 +1,6 @@
+{
+  "extends": "@cerberus/node-cli",
+  "ignore": [
+    "tests/**"
+  ]
+}

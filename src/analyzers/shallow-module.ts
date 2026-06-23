@@ -28,8 +28,9 @@ import { createSourceFile } from './ts-project.js';
  *      is real behavior.
  *
  * Type guards, branded constructors, and re-exports of one-liners trip this if
- * exported directly; suppress with a `// quality-gate-allow: shallow-module`
- * line comment on the function declaration when intentional.
+ * exported directly; suppress with a `// cerberus-allow: shallow-module`
+ * line comment on the function declaration when intentional. The legacy
+ * `quality-gate-allow` spelling is still accepted.
  */
 
 const SUPPRESSION = /(?:cerberus|quality-gate)-allow:\s*shallow-module\b/;
@@ -145,7 +146,7 @@ export async function analyzeShallowModule(input: AnalyzerInput): Promise<Analyz
     location: `${f.name}:${f.line}`,
     current: 1,
     threshold: 0,
-    suggestion: `"${f.name}" — ${f.reason}. Either inline the call at the caller (Ousterhout, *A Philosophy of Software Design* ch. 4), or move real abstraction inside (validation, error mapping, default values). Suppress with \`// quality-gate-allow: shallow-module\` if the indirection is intentional (e.g. testing seam).`,
+    suggestion: `"${f.name}" — ${f.reason}. Either inline the call at the caller (Ousterhout, *A Philosophy of Software Design* ch. 4), or move real abstraction inside (validation, error mapping, default values). Suppress with \`// cerberus-allow: shallow-module\` if the indirection is intentional (e.g. testing seam).`,
   }));
 
   return {
