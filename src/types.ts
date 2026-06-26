@@ -76,6 +76,21 @@ export type Config = {
     parameterCount: number;
   };
   ignore: string[];
+  /**
+   * Non-source binary / design artifacts (extension globs) skipped by EVERY
+   * tier — quality AND security. Unlike `ignore` (a quality-only knob the
+   * security tier deliberately overrides), these are file *types* that can't
+   * carry a meaningful source-level secret leak: images, fonts, media,
+   * archives, and design files like `.pen`. Scanning a multi-MB asset as utf8
+   * for `sk-…` tokens is pure cost and false-positive surface.
+   *
+   * Honored only for concrete extension globs (`**\/*.pen`, `*.png`,
+   * `**\/*.{woff,woff2}`); a non-extension pattern (`**\/*`, `*`) is rejected
+   * so this list can never be widened into a blanket hole that silences the
+   * secret scanner — see `makeBinaryAssetMatcher`. The config value UNIONs with
+   * the built-in defaults (adds to them; never replaces).
+   */
+  binaryAssets: string[];
   maxRefactorAttempts: number;
   preCommit: {
     enabled: AnalyzerName[];

@@ -43,4 +43,18 @@ describe('config loader', () => {
   it('throws on an unknown preset', () => {
     expect(() => loadConfig(tempProject({ extends: '@quality-gate/nope' }))).toThrow(/Unknown preset/);
   });
+
+  it('ships binaryAssets defaults that cover .pen and common binary assets', () => {
+    const config = loadConfig(tempProject());
+    expect(config.binaryAssets).toContain('**/*.pen');
+    expect(config.binaryAssets).toContain('**/*.{png,jpg,jpeg,gif,webp,svg,ico,bmp,avif,tiff}');
+  });
+
+  it('UNIONs user binaryAssets onto the defaults instead of replacing them', () => {
+    const config = loadConfig(tempProject({ binaryAssets: ['**/*.glb'] }));
+    // user addition is present…
+    expect(config.binaryAssets).toContain('**/*.glb');
+    // …and the built-in .pen default survives.
+    expect(config.binaryAssets).toContain('**/*.pen');
+  });
 });

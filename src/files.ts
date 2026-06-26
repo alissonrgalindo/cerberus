@@ -30,6 +30,43 @@ export function makeIgnoreMatcher(patterns: string[]): (relPosixPath: string) =>
   return (relPosixPath: string) => isMatch(relPosixPath);
 }
 
+/**
+ * True only for a glob that targets a *concrete* file extension — the trailing
+ * basename segment must end in `.<ext>` or `.{<ext>,…}` with no wildcard in the
+ * extension itself. `**\/*.pen`, `*.png`, `src/**\/*.{woff,woff2}` pass;
+ * `**`, `*`, `**\/*`, `**\/*.*`, `secret.env*` do not.
+ *
+ * This is the gate that keeps `binaryAssets` from becoming a security hole: the
+ * list is honored by the (non-bypassable) security tier, so a pattern that
+ * could match arbitrary files would let an agent silence the secret scanner by
+ * widening it. Restricting to extension globs means the worst a config can do
+ * is exempt a specific file *type* — not "everything".
+ */
+export function isExtensionGlob(pattern: string): boolean {
+  const lastSegment = pattern.split('/').pop() ?? pattern;
+  return /\.(?:[A-Za-z0-9]+|\{[A-Za-z0-9]+(?:,[A-Za-z0-9]+)*\})$/.test(lastSegment);
+}
+
+/**
+ * Builds a matcher for the `binaryAssets` list, dropping any entry that isn't a
+ * concrete extension glob (warning to stderr so a typo'd pattern isn't silently
+ * ignored). Returns a matcher that's always safe to consult from the security
+ * tier — it can only ever match by file extension.
+ */
+export function makeBinaryAssetMatcher(patterns: string[]): (relPosixPath: string) => boolean {
+  const safe = patterns.filter((p) => {
+    if (isExtensionGlob(p)) return true;
+    process.stderr.write(
+      `cerberus: ignoring binaryAssets entry "${p}" — only concrete extension globs ` +
+        `(e.g. **/*.pen, *.png) are honored, so the secret scanner can't be widened away.\n`,
+    );
+    return false;
+  });
+  if (safe.length === 0) return () => false;
+  const isMatch = picomatch(safe, { dot: true });
+  return (relPosixPath: string) => isMatch(relPosixPath);
+}
+
 /** Recursively collects analyzable TS/JS source files under rootDir, honoring ignore globs. */
 export function walkTsFiles(rootDir: string, ignore: string[]): string[] {
   const isIgnored = makeIgnoreMatcher(ignore);

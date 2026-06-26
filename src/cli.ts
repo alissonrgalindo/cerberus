@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { isAbsolute, relative, resolve } from 'node:path';
+import { basename, isAbsolute, relative, resolve } from 'node:path';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import chalk from 'chalk';
@@ -9,7 +9,7 @@ import { measureCyclomatic } from './analyzers/cyclomatic-complexity.js';
 import { analyzeDuplication } from './analyzers/duplication.js';
 import { analyzeMigrationSafety } from './analyzers/migration-safety.js';
 import { analyzeNewDependency } from './analyzers/new-dependency.js';
-import { analyzeSecretInDiff } from './analyzers/secret-in-diff.js';
+import { analyzeSecretInDiff, isEnvFile } from './analyzers/secret-in-diff.js';
 import { measureTypeSafety } from './analyzers/type-safety.js';
 import { hashFileSet, incrementAttempt } from './attempts.js';
 import { BASELINE_FILE, loadBaseline, saveBaseline } from './baseline.js';
@@ -17,7 +17,15 @@ import { isGitCommit } from './commit-detect.js';
 import { CONFIG_FILE, loadConfig } from './config.js';
 import { listDrift, type DriftEntry } from './drift.js';
 import { analyzeFile, analyzePythonFile, computeFileBaseline, type FileReport } from './engine.js';
-import { CODE_EXT, DTS_EXT, isBuildArtifactPath, makeIgnoreMatcher, toPosix, walkTsFiles } from './files.js';
+import {
+  CODE_EXT,
+  DTS_EXT,
+  isBuildArtifactPath,
+  makeBinaryAssetMatcher,
+  makeIgnoreMatcher,
+  toPosix,
+  walkTsFiles,
+} from './files.js';
 import { getChangedFiles, getFileContent, getStagedContent, getStagedFiles } from './git-diff.js';
 import { applyTodoInjection, stageFiles } from './injector.js';
 import {
@@ -65,6 +73,23 @@ function isPyAnalyzable(absPath: string): boolean {
 
 function isAnalyzable(absPath: string): boolean {
   return isTsAnalyzable(absPath) || isMigrationSql(absPath) || isPyAnalyzable(absPath);
+}
+
+/**
+ * Files the set-level SECURITY analyzers (secret-in-diff, new-dependency) read.
+ * Drops non-source binary / design assets (`.pen`, images, fonts, …): scanning
+ * a multi-MB artifact as utf8 for `sk-…` tokens is pure cost and false-positive
+ * surface, not security. The quality tier already only looks at source
+ * extensions, so this skip only matters here.
+ *
+ * Never drops an env file (`.env`, `.env.production`, …) — the single most
+ * sensitive thing to leak — even if its extension is listed under
+ * `binaryAssets`. And `makeBinaryAssetMatcher` only honors concrete extension
+ * globs, so the list can never be widened into a hole that silences the scanner.
+ */
+function selectSecurityFiles(allStaged: string[], cwd: string, config: Config): string[] {
+  const isBinaryAsset = makeBinaryAssetMatcher(config.binaryAssets);
+  return allStaged.filter((f) => isEnvFile(basename(f)) || !isBinaryAsset(relKey(cwd, f)));
 }
 
 function bypassActive(): boolean {
@@ -147,6 +172,7 @@ async function performCheck(opts: {
   const baseline = loadBaseline(cwd);
   const allStaged = opts.files.filter((f) => existsSync(f));
   const files = allStaged.filter(isAnalyzable);
+  const securityFiles = selectSecurityFiles(allStaged, cwd, fullConfig);
 
   const reports: FileReport[] = [];
   const tsFiles = files.filter(isTsAnalyzable);
@@ -197,14 +223,14 @@ async function performCheck(opts: {
   if (enabled.has('migration-safety') && sqlFiles.length > 0) {
     setViolations.push(...analyzeMigrationSafety(sqlFiles, cwd, readSecuritySource));
   }
-  // secret-in-diff scans every staged file regardless of extension (env files,
-  // configs, fixtures, markdown — secrets leak through all of them).
-  if (enabled.has('secret-in-diff') && allStaged.length > 0) {
-    setViolations.push(...analyzeSecretInDiff(allStaged, cwd, readSecuritySource));
+  // secret-in-diff scans every staged file regardless of extension (env, config,
+  // fixtures, markdown), minus the binary/design assets selectSecurityFiles drops.
+  if (enabled.has('secret-in-diff') && securityFiles.length > 0) {
+    setViolations.push(...analyzeSecretInDiff(securityFiles, cwd, readSecuritySource));
   }
   // new-dependency audits staged package.json manifests for slopsquatting.
-  if (enabled.has('new-dependency') && allStaged.length > 0) {
-    setViolations.push(...analyzeNewDependency(allStaged, cwd, readSecuritySource));
+  if (enabled.has('new-dependency') && securityFiles.length > 0) {
+    setViolations.push(...analyzeNewDependency(securityFiles, cwd, readSecuritySource));
   }
 
   for (const sv of setViolations) {

@@ -1650,7 +1650,7 @@
           "percent": 0
         },
         "functionLength": {
-          "max": 157,
+          "max": 158,
           "perFunction": {
             "relKey": 3,
             "toAbs": 3,
@@ -1659,7 +1659,7 @@
             "isPyAnalyzable": 3,
             "isAnalyzable": 3,
             "bypassActive": 4,
-            "performCheck": 157,
+            "performCheck": 158,
             "<anonymous>:106": 1,
             "skipQuality": 4,
             "<anonymous>:127": 1,
