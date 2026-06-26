@@ -19,6 +19,24 @@ Presets: `@cerberus/nextjs`, `@cerberus/monorepo-turborepo`, `@cerberus/node-cli
 
 `ignore` is a **quality knob only**: matched files are dropped from the baseline and from every quality analyzer (complexity, type-safety, duplication, coverage, shape, …). The **security tier still runs on ignored files** — `secret-in-diff`, `injection`, `migration-safety`, and `new-dependency` cannot be silenced by widening `ignore`, the same way they can't be disabled by editing `preCommit.enabled` (see [the security tier](./ci-and-languages.md#security-tier-non-bypassable)).
 
+### `binaryAssets` — non-source artifacts skipped everywhere
+
+`binaryAssets` is the one exception to "security runs on everything": non-source **binary / design artifacts** are skipped by *every* tier, including `secret-in-diff` and `new-dependency`. These are file *types* that can't carry a meaningful source-level credential leak — images, fonts, media, archives, and design files like `.pen` (Pencil). Reading a multi-MB asset as utf8 to look for `sk-…` tokens is pure cost and false-positive surface, not security.
+
+```json
+{
+  "extends": "@cerberus/monorepo-turborepo",
+  "binaryAssets": ["**/*.glb", "**/*.parquet"]
+}
+```
+
+Two safeguards keep this from becoming a hole in the non-bypassable security tier:
+
+- **Extension globs only.** Each entry must target a concrete file extension (`**/*.pen`, `*.png`, `**/*.{woff,woff2}`). A pattern that could match arbitrary files (`**/*`, `*`, `**/*.*`) is rejected with a warning — so the list can only ever exempt a file *type*, never "everything".
+- **`.env` is never exemptable.** Env files are scanned unconditionally even if their extension is listed, since they're the single most sensitive thing to leak.
+
+The config value **adds to** the built-in defaults (it does not replace them). Defaults already cover `.pen`, common image/font/media/archive extensions, and `.pdf/.psd/.sketch/.fig`.
+
 ## Commands
 
 | Command | Purpose |

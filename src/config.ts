@@ -34,6 +34,10 @@ function merge(base: Config, over: PartialConfig): Config {
   return {
     thresholds: { ...base.thresholds, ...over.thresholds },
     ignore: over.ignore ?? base.ignore,
+    // binaryAssets ADDS to the defaults instead of replacing them: a team can
+    // register its own asset formats without losing the built-in skip list
+    // (.pen, images, fonts, …). De-duped to keep the matcher tidy.
+    binaryAssets: [...new Set([...(base.binaryAssets ?? []), ...(over.binaryAssets ?? [])])],
     maxRefactorAttempts: over.maxRefactorAttempts ?? base.maxRefactorAttempts,
     preCommit: { ...base.preCommit, ...over.preCommit },
     tsxOverrides: { ...base.tsxOverrides, ...over.tsxOverrides },

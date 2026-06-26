@@ -2,7 +2,7 @@
 
 // src/cli.ts
 import { existsSync as existsSync11, readFileSync as readFileSync15 } from "fs";
-import { isAbsolute as isAbsolute3, relative as relative7, resolve as resolve6 } from "path";
+import { basename as basename3, isAbsolute as isAbsolute3, relative as relative7, resolve as resolve6 } from "path";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import chalk2 from "chalk";
@@ -106,6 +106,23 @@ function isBuildArtifactPath(relPosixPath) {
 }
 function makeIgnoreMatcher(patterns) {
   const isMatch = picomatch(patterns, { dot: true });
+  return (relPosixPath) => isMatch(relPosixPath);
+}
+function isExtensionGlob(pattern) {
+  const lastSegment = pattern.split("/").pop() ?? pattern;
+  return /\.(?:[A-Za-z0-9]+|\{[A-Za-z0-9]+(?:,[A-Za-z0-9]+)*\})$/.test(lastSegment);
+}
+function makeBinaryAssetMatcher(patterns) {
+  const safe = patterns.filter((p) => {
+    if (isExtensionGlob(p)) return true;
+    process.stderr.write(
+      `cerberus: ignoring binaryAssets entry "${p}" \u2014 only concrete extension globs (e.g. **/*.pen, *.png) are honored, so the secret scanner can't be widened away.
+`
+    );
+    return false;
+  });
+  if (safe.length === 0) return () => false;
+  const isMatch = picomatch(safe, { dot: true });
   return (relPosixPath) => isMatch(relPosixPath);
 }
 function walkTsFiles(rootDir, ignore) {
@@ -1443,6 +1460,24 @@ function defaultConfig() {
       "**/migrations/**",
       "**/generated/**"
     ],
+    // Non-source binary / design artifacts skipped by every tier (quality AND
+    // security). Extension globs only — `makeBinaryAssetMatcher` rejects
+    // anything that isn't a concrete extension so this can't become a `**/*`
+    // hole. The user config UNIONs onto this (adds; never replaces).
+    binaryAssets: [
+      // Design files (Pencil / .pen — committed as large JSON or binary).
+      "**/*.pen",
+      // Images.
+      "**/*.{png,jpg,jpeg,gif,webp,svg,ico,bmp,avif,tiff}",
+      // Fonts.
+      "**/*.{woff,woff2,ttf,otf,eot}",
+      // Media.
+      "**/*.{mp4,mov,webm,mp3,wav,ogg,m4a}",
+      // Archives.
+      "**/*.{zip,tar,gz,tgz,bz2,rar,7z}",
+      // Documents / other binaries.
+      "**/*.{pdf,psd,sketch,fig}"
+    ],
     maxRefactorAttempts: 2,
     preCommit: {
       enabled: [
@@ -1639,6 +1674,10 @@ function merge(base, over) {
   return {
     thresholds: { ...base.thresholds, ...over.thresholds },
     ignore: over.ignore ?? base.ignore,
+    // binaryAssets ADDS to the defaults instead of replacing them: a team can
+    // register its own asset formats without losing the built-in skip list
+    // (.pen, images, fonts, …). De-duped to keep the matcher tidy.
+    binaryAssets: [.../* @__PURE__ */ new Set([...base.binaryAssets ?? [], ...over.binaryAssets ?? []])],
     maxRefactorAttempts: over.maxRefactorAttempts ?? base.maxRefactorAttempts,
     preCommit: { ...base.preCommit, ...over.preCommit },
     tsxOverrides: { ...base.tsxOverrides, ...over.tsxOverrides }
@@ -2943,6 +2982,10 @@ function isPyAnalyzable(absPath) {
 function isAnalyzable(absPath) {
   return isTsAnalyzable(absPath) || isMigrationSql(absPath) || isPyAnalyzable(absPath);
 }
+function selectSecurityFiles(allStaged, cwd, config) {
+  const isBinaryAsset = makeBinaryAssetMatcher(config.binaryAssets);
+  return allStaged.filter((f) => isEnvFile(basename3(f)) || !isBinaryAsset(relKey(cwd, f)));
+}
 function bypassActive() {
   return process.env.CERBERUS_BYPASS === "1" || process.env.QUALITY_GATE_BYPASS === "1";
 }
@@ -2984,6 +3027,7 @@ async function performCheck(opts) {
   const baseline = loadBaseline(cwd);
   const allStaged = opts.files.filter((f) => existsSync11(f));
   const files = allStaged.filter(isAnalyzable);
+  const securityFiles = selectSecurityFiles(allStaged, cwd, fullConfig);
   const reports = [];
   const tsFiles = files.filter(isTsAnalyzable);
   const sqlFiles = files.filter(isMigrationSql);
@@ -3027,11 +3071,11 @@ async function performCheck(opts) {
   if (enabled.has("migration-safety") && sqlFiles.length > 0) {
     setViolations.push(...analyzeMigrationSafety(sqlFiles, cwd, readSecuritySource));
   }
-  if (enabled.has("secret-in-diff") && allStaged.length > 0) {
-    setViolations.push(...analyzeSecretInDiff(allStaged, cwd, readSecuritySource));
+  if (enabled.has("secret-in-diff") && securityFiles.length > 0) {
+    setViolations.push(...analyzeSecretInDiff(securityFiles, cwd, readSecuritySource));
   }
-  if (enabled.has("new-dependency") && allStaged.length > 0) {
-    setViolations.push(...analyzeNewDependency(allStaged, cwd, readSecuritySource));
+  if (enabled.has("new-dependency") && securityFiles.length > 0) {
+    setViolations.push(...analyzeNewDependency(securityFiles, cwd, readSecuritySource));
   }
   for (const sv of setViolations) {
     let report = reports.find((r) => r.file === sv.file);

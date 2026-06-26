@@ -129,7 +129,14 @@ function isSuppressed(content: string, idx: number): boolean {
   return SUPPRESSION.test(content.slice(start, end));
 }
 
-function isEnvFile(name: string): boolean {
+/**
+ * True for a committed env file (`.env`, `.env.production`, …) that isn't a
+ * documented template (`.env.example`/`.sample`/`.template`/`.dist`). Exported
+ * so the security tier can guarantee env files are scanned even if a config
+ * lists their extension under `binaryAssets` — they're the single most
+ * sensitive file to leak, never exemptable.
+ */
+export function isEnvFile(name: string): boolean {
   if (!ENV_FILE_RE.test(name)) return false;
   if (ENV_ALLOWLIST.test(name)) return false;
   return true;
