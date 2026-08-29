@@ -11,8 +11,8 @@ import { createSourceFile } from './ts-project.js';
  *
  * We look for `await db.*` (or `await tx.*`/`trx.*`) inside loop bodies and
  * inside `.map/.forEach/.flatMap/.filter/.reduce` callbacks over an array.
- * The receiver name is configurable in spirit but defaults to a small set
- * of common aliases for the Drizzle client.
+ * Receivers reached through a property access like `context.db` are matched
+ * too. The receiver name defaults to a small set of common Drizzle aliases.
  */
 const DB_RECEIVERS = new Set(['db', 'tx', 'trx', 'database']);
 const ARRAY_ITERATOR_METHODS = new Set(['map', 'forEach', 'flatMap', 'filter', 'reduce']);
@@ -37,9 +37,11 @@ function rootReceiver(node: Node): Node {
   let cur: Node = node;
   // Drizzle queries chain like `db.select().from(t).where(...)` — the .getExpression()
   // of a CallExpression is another expression that can itself be a PropertyAccess
-  // or a CallExpression. Unwrap both until we hit the bare identifier.
+  // or a CallExpression. Unwrap both until we hit the bare identifier or a known
+  // DB receiver property (e.g. `context.db`).
   while (true) {
     if (Node.isPropertyAccessExpression(cur)) {
+      if (DB_RECEIVERS.has(cur.getName())) return cur;
       cur = cur.getExpression();
     } else if (Node.isCallExpression(cur)) {
       cur = cur.getExpression();
@@ -53,13 +55,17 @@ function rootReceiver(node: Node): Node {
 /** True for `db.something` / `db.query.x.findFirst` / `db.select().from(...).where(...)`. */
 function isDbAccess(call: CallExpression): boolean {
   const root = rootReceiver(call.getExpression());
-  return Node.isIdentifier(root) && DB_RECEIVERS.has(root.getText());
+  return (
+    (Node.isIdentifier(root) && DB_RECEIVERS.has(root.getText())) ||
+    (Node.isPropertyAccessExpression(root) && DB_RECEIVERS.has(root.getName()))
+  );
 }
 
-/** Get the receiver identifier name for diagnostic output. */
+/** Get the receiver name (e.g. `db` or `context.db`) for diagnostic output. */
 function dbReceiverName(call: CallExpression): string {
   const root = rootReceiver(call.getExpression());
-  return Node.isIdentifier(root) ? root.getText() : 'db';
+  if (Node.isIdentifier(root) || Node.isPropertyAccessExpression(root)) return root.getText();
+  return 'db';
 }
 
 /** True if the await is inside a loop body, stopping at function boundaries. */

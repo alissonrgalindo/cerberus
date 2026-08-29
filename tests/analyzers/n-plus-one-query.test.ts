@@ -16,6 +16,19 @@ export async function load(ids: number[]) {
     expect(result.metrics.nPlusOneCount).toBe(1);
   });
 
+  it('flags await context.db.* inside for-of', async () => {
+    const src = `
+export async function copy(targetId: string, formulas: Array<{id: string}>) {
+  for (const formula of formulas) {
+    await context.db.insert(groups).values({ id: formula.id });
+  }
+}`;
+    const result = await analyzeNPlusOneQuery(inputFromSource('lib/x.ts', src));
+    expect(result.passed).toBe(false);
+    expect(result.metrics.nPlusOneCount).toBe(1);
+    expect(result.violations[0].suggestion).toContain('await context.db.*');
+  });
+
   it('flags await db.* inside .map(async ...)', async () => {
     const src = `
 import { db } from './db';
@@ -23,6 +36,18 @@ export async function load(ids: number[]) {
   return Promise.all(ids.map(async (id) => {
     return await db.select().from(users).where(eq(users.id, id));
   }));
+}`;
+    const result = await analyzeNPlusOneQuery(inputFromSource('lib/x.ts', src));
+    expect(result.passed).toBe(false);
+    expect(result.metrics.nPlusOneCount).toBe(1);
+  });
+
+  it('flags await context.db.* inside .map(async ...)', async () => {
+    const src = `
+export async function load(ids: number[]) {
+  return Promise.all(ids.map(async (id) =>
+    await context.db.update(users).set({ active: true }).where(eq(users.id, id)),
+  ));
 }`;
     const result = await analyzeNPlusOneQuery(inputFromSource('lib/x.ts', src));
     expect(result.passed).toBe(false);
@@ -48,6 +73,16 @@ export async function load(ids: number[]) {
 }`;
     const result = await analyzeNPlusOneQuery(inputFromSource('lib/x.ts', src));
     expect(result.passed).toBe(true);
+  });
+
+  it('passes a context.db query outside any loop', async () => {
+    const src = `
+export async function load() {
+  return await context.db.select().from(users);
+}`;
+    const result = await analyzeNPlusOneQuery(inputFromSource('lib/x.ts', src));
+    expect(result.passed).toBe(true);
+    expect(result.metrics.nPlusOneCount).toBe(0);
   });
 
   it('passes a loop that does not query the db', async () => {
