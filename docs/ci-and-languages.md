@@ -48,7 +48,7 @@ Suppressions use the comment form: `# cerberus-allow: injection`.
 
 `.js`, `.mjs`, `.jsx`, and `.cjs` files flow through the **same gate as TypeScript**, no rename required, which is what makes a `checkJs` + JSDoc codebase enforceable.
 Source is parsed to an AST with `allowJs`, so **every analyzer except `type-safety` runs on `.js` exactly as on `.ts`**: same metrics, limits, security tier, and delta-vs-baseline grandfathering.
-That covers the complexity/shape analyzers (cognitive- & cyclomatic-complexity, function-length, parameter-count, shallow-module), the presence-based ones (silent-catch, injection, hallucinated-import, n-plus-one-query, transaction/revalidate-required), and the staged-set passes (duplication, secret-in-diff, new-dependency, migration-safety).
+That covers the complexity/shape analyzers (cognitive- & cyclomatic-complexity, function-length, parameter-count, shallow-module), the delta-aware `n-plus-one-query` analyzer, the presence-based ones (silent-catch, injection, hallucinated-import, transaction/revalidate-required), and the staged-set passes (duplication, secret-in-diff, new-dependency, migration-safety).
 
 - **type-safety is a no-op on JavaScript.** It's the only analyzer that needs the TS type-checker. A `checkJs` + JSDoc migration keeps its `@ts-expect-error` / `@ts-ignore` deferrals and `@type {any}` JSDoc in `.js` files, and the gate does **not** flag them as new-`any` regressions.
 - **`.d.ts`** files are excluded from analysis (still scanned by secret-in-diff).

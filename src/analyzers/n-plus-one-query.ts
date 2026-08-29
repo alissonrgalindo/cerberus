@@ -117,9 +117,19 @@ function findNPlusOne(filePath: string, fileContent: string): Finding[] {
   return findings;
 }
 
+/** Counts N+1 findings in a file so legacy queries can be grandfathered by the baseline. */
+// cerberus-allow: shallow-module
+export function measureNPlusOneQuery(filePath: string, fileContent: string): number {
+  return findNPlusOne(filePath, fileContent).length;
+}
+
 export async function analyzeNPlusOneQuery(input: AnalyzerInput): Promise<AnalyzerResult> {
   const findings = findNPlusOne(input.filePath, input.fileContent);
-  const violations: Violation[] = findings.map((f) => ({
+  // Legacy findings captured in the baseline pass until the file gains more.
+  // New files have a zero baseline, so every finding remains an absolute failure.
+  const baseCount = input.fileBaseline?.metrics.nPlusOneQuery?.count ?? 0;
+  const flagged = findings.length > baseCount ? findings : [];
+  const violations: Violation[] = flagged.map((f) => ({
     analyzer: 'n-plus-one-query',
     location: `L${f.line}`,
     current: 1,

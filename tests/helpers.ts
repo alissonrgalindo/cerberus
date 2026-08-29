@@ -67,6 +67,7 @@ export function baselineWith(partial: {
   parameterCountPerFunction?: Record<string, number>;
   silentCatch?: { count: number };
   shallowModule?: { count: number };
+  nPlusOneQuery?: { count: number };
   cognitiveMax?: number;
   cyclomaticMax?: number;
   functionLengthMax?: number;
@@ -100,6 +101,7 @@ export function baselineWith(partial: {
       },
       silentCatch: partial.silentCatch ?? { count: 0 },
       shallowModule: partial.shallowModule ?? { count: 0 },
+      ...(partial.nPlusOneQuery ? { nPlusOneQuery: partial.nPlusOneQuery } : {}),
     },
   };
 }

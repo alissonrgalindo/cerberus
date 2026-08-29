@@ -40,4 +40,17 @@ describe('engine', () => {
     const report = await analyzeFile('clean.ts', 'export const x = 1;\n', config);
     expect(report.passed).toBe(true);
   });
+
+  it('stores only non-zero N+1 baseline counts', () => {
+    const withNPlusOne = `export async function load(ids: number[]) {
+  for (const id of ids) {
+    await db.query.users.findFirst({ where: { id } });
+  }
+}`;
+    const findingBaseline = computeFileBaseline('query.ts', withNPlusOne);
+    const cleanBaseline = computeFileBaseline('clean.ts', 'export const x = 1;\n');
+
+    expect(findingBaseline.metrics.nPlusOneQuery?.count).toBe(1);
+    expect(cleanBaseline.metrics).not.toHaveProperty('nPlusOneQuery');
+  });
 });

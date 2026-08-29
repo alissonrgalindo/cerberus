@@ -11,6 +11,7 @@ import chalk2 from "chalk";
 import { getSourceOutput } from "cognitive-complexity-ts";
 
 // src/types.ts
+var CERBERUS_MARKER_RE = /^\s*\/\/ TODO: cerberus\([^=\s]+=\d+, limit=\d+, attempt=\d+\/\d+\)\s*$/;
 var SECURITY_ANALYZERS = /* @__PURE__ */ new Set([
   "secret-in-diff",
   "migration-safety",
@@ -1732,6 +1733,7 @@ function functionName2(node) {
 }
 function measureFunctionShapes(filePath, fileContent) {
   const sourceFile = createSourceFile(filePath, fileContent);
+  const fileLines = fileContent.split("\n");
   const shapes = [];
   for (const node of sourceFile.getDescendants()) {
     if (!FUNCTION_LIKE_KINDS2.has(node.getKind())) continue;
@@ -1741,7 +1743,10 @@ function measureFunctionShapes(filePath, fileContent) {
       const body = node.getBody();
       if (!body) continue;
       if (Node3.isBlock(body)) {
-        bodyLines = body.getEndLineNumber() - body.getStartLineNumber() + 1;
+        const bodyStartLine = body.getStartLineNumber();
+        const bodyEndLine = body.getEndLineNumber();
+        const markerLines = fileLines.slice(bodyStartLine - 1, bodyEndLine).filter((line) => CERBERUS_MARKER_RE.test(line)).length;
+        bodyLines = bodyEndLine - bodyStartLine + 1 - markerLines;
       } else {
         bodyLines = 1;
       }
@@ -2182,9 +2187,14 @@ function findNPlusOne(filePath, fileContent) {
   }
   return findings;
 }
+function measureNPlusOneQuery(filePath, fileContent) {
+  return findNPlusOne(filePath, fileContent).length;
+}
 async function analyzeNPlusOneQuery(input) {
   const findings = findNPlusOne(input.filePath, input.fileContent);
-  const violations = findings.map((f) => ({
+  const baseCount = input.fileBaseline?.metrics.nPlusOneQuery?.count ?? 0;
+  const flagged = findings.length > baseCount ? findings : [];
+  const violations = flagged.map((f) => ({
     analyzer: "n-plus-one-query",
     location: `L${f.line}`,
     current: 1,
@@ -2626,6 +2636,7 @@ function computeFileBaseline(filePath, fileContent) {
   const cyclomatic = measureCyclomatic(filePath, fileContent);
   const typeSafety = measureTypeSafety(filePath, fileContent);
   const shapes = measureFunctionShapes(filePath, fileContent);
+  const nPlusOneCount = measureNPlusOneQuery(filePath, fileContent);
   const cognitivePer = {};
   for (const fn of cognitive) cognitivePer[baselineKey(fn)] = fn.score;
   const cyclomaticPer = {};
@@ -2655,7 +2666,8 @@ function computeFileBaseline(filePath, fileContent) {
       functionLength: { max: maxLen, perFunction: lengthPer },
       parameterCount: { max: maxParams, perFunction: paramPer },
       silentCatch: { count: measureSilentCatch(filePath, fileContent) },
-      shallowModule: { count: measureShallowModule(filePath, fileContent) }
+      shallowModule: { count: measureShallowModule(filePath, fileContent) },
+      ...nPlusOneCount > 0 ? { nPlusOneQuery: { count: nPlusOneCount } } : {}
     }
   };
 }
@@ -2735,22 +2747,70 @@ function targetLine(v) {
   if (lmark) return Number(lmark[1]);
   return 1;
 }
+function groupTodoComments(violations, attempt) {
+  const byLine = /* @__PURE__ */ new Map();
+  for (const violation of violations) {
+    const line = targetLine(violation);
+    const comment = buildTodoComment(violation, attempt);
+    const comments = byLine.get(line) ?? [];
+    if (!comments.includes(comment)) comments.push(comment);
+    byLine.set(line, comments);
+  }
+  return byLine;
+}
+function markerAnalyzer(comment) {
+  return comment.match(/\/\/ TODO: cerberus\(([^=\s]+)=/)?.[1];
+}
+function scanMarkerBlock(lines, lineNumber) {
+  let insertionIndex = Math.min(Math.max(lineNumber - 1, 0), lines.length);
+  while (insertionIndex < lines.length && CERBERUS_MARKER_RE.test(lines[insertionIndex] ?? "")) {
+    insertionIndex += 1;
+  }
+  const indent = lines[insertionIndex]?.match(/^\s*/)?.[0] ?? "";
+  const analyzerIndexes = /* @__PURE__ */ new Map();
+  for (let index = insertionIndex - 1; index >= 0; index -= 1) {
+    const marker = lines[index] ?? "";
+    if (!CERBERUS_MARKER_RE.test(marker)) break;
+    const analyzer = markerAnalyzer(marker);
+    if (analyzer !== void 0) analyzerIndexes.set(analyzer, index);
+  }
+  return { insertionIndex, indent, analyzerIndexes };
+}
+function addMarkerUpdate(updates, comment) {
+  const analyzer = markerAnalyzer(comment);
+  const existingIndex = analyzer === void 0 ? void 0 : updates.analyzerIndexes.get(analyzer);
+  if (existingIndex !== void 0) {
+    const markerIndent = updates.lines[existingIndex]?.match(/^\s*/)?.[0] ?? updates.indent;
+    updates.lines[existingIndex] = markerIndent + comment;
+    return;
+  }
+  const pendingIndex = analyzer === void 0 ? void 0 : updates.pendingIndexes.get(analyzer);
+  if (pendingIndex !== void 0) {
+    updates.additions[pendingIndex] = updates.indent + comment;
+    return;
+  }
+  if (analyzer !== void 0) updates.pendingIndexes.set(analyzer, updates.additions.length);
+  updates.additions.push(updates.indent + comment);
+}
+function updateMarkerBlock(lines, lineNumber, comments) {
+  const block = scanMarkerBlock(lines, lineNumber);
+  const updates = {
+    lines,
+    indent: block.indent,
+    analyzerIndexes: block.analyzerIndexes,
+    pendingIndexes: /* @__PURE__ */ new Map(),
+    additions: []
+  };
+  for (const comment of comments) addMarkerUpdate(updates, comment);
+  if (updates.additions.length > 0) {
+    lines.splice(block.insertionIndex, 0, ...updates.additions);
+  }
+}
 function injectTodos(content, violations, attempt) {
   const lines = content.split("\n");
-  const byLine = /* @__PURE__ */ new Map();
-  for (const v of violations) {
-    const ln = targetLine(v);
-    const comment = buildTodoComment(v, attempt);
-    const arr = byLine.get(ln) ?? [];
-    if (!arr.includes(comment)) arr.push(comment);
-    byLine.set(ln, arr);
-  }
-  for (const ln of [...byLine.keys()].sort((a, b) => b - a)) {
-    const idx = Math.min(Math.max(ln - 1, 0), lines.length);
-    const indent = lines[idx]?.match(/^\s*/)?.[0] ?? "";
-    const aboveText = lines[idx - 1] ?? "";
-    const comments = byLine.get(ln).filter((c) => !aboveText.includes(c)).map((c) => indent + c);
-    if (comments.length > 0) lines.splice(idx, 0, ...comments);
+  const byLine = groupTodoComments(violations, attempt);
+  for (const line of [...byLine.keys()].sort((a, b) => b - a)) {
+    updateMarkerBlock(lines, line, byLine.get(line));
   }
   return lines.join("\n");
 }
