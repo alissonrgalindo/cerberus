@@ -2130,6 +2130,7 @@ function rootReceiver(node) {
   let cur = node;
   while (true) {
     if (Node6.isPropertyAccessExpression(cur)) {
+      if (DB_RECEIVERS.has(cur.getName())) return cur;
       cur = cur.getExpression();
     } else if (Node6.isCallExpression(cur)) {
       cur = cur.getExpression();
@@ -2141,11 +2142,12 @@ function rootReceiver(node) {
 }
 function isDbAccess(call) {
   const root = rootReceiver(call.getExpression());
-  return Node6.isIdentifier(root) && DB_RECEIVERS.has(root.getText());
+  return Node6.isIdentifier(root) && DB_RECEIVERS.has(root.getText()) || Node6.isPropertyAccessExpression(root) && DB_RECEIVERS.has(root.getName());
 }
 function dbReceiverName(call) {
   const root = rootReceiver(call.getExpression());
-  return Node6.isIdentifier(root) ? root.getText() : "db";
+  if (Node6.isIdentifier(root) || Node6.isPropertyAccessExpression(root)) return root.getText();
+  return "db";
 }
 function isInsideLoop(node) {
   let cur = node.getParent();
