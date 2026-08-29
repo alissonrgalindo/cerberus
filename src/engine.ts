@@ -9,7 +9,7 @@ import {
   analyzePyInjection,
   analyzePySilentCatch,
 } from './analyzers/python.js';
-import { analyzeNPlusOneQuery } from './analyzers/n-plus-one-query.js';
+import { analyzeNPlusOneQuery, measureNPlusOneQuery } from './analyzers/n-plus-one-query.js';
 import { analyzeRevalidateRequired } from './analyzers/revalidate-required.js';
 import { analyzeShallowModule, measureShallowModule } from './analyzers/shallow-module.js';
 import { analyzeSilentCatch, measureSilentCatch } from './analyzers/silent-catch.js';
@@ -140,6 +140,7 @@ export function computeFileBaseline(filePath: string, fileContent: string): File
   const cyclomatic = measureCyclomatic(filePath, fileContent);
   const typeSafety = measureTypeSafety(filePath, fileContent);
   const shapes = measureFunctionShapes(filePath, fileContent);
+  const nPlusOneCount = measureNPlusOneQuery(filePath, fileContent);
 
   const cognitivePer: Record<string, number> = {};
   for (const fn of cognitive) cognitivePer[baselineKey(fn)] = fn.score;
@@ -173,6 +174,7 @@ export function computeFileBaseline(filePath: string, fileContent: string): File
       parameterCount: { max: maxParams, perFunction: paramPer },
       silentCatch: { count: measureSilentCatch(filePath, fileContent) },
       shallowModule: { count: measureShallowModule(filePath, fileContent) },
+      ...(nPlusOneCount > 0 ? { nPlusOneQuery: { count: nPlusOneCount } } : {}),
     },
   };
 }

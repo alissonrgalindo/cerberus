@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { analyzeFunctionShape } from '../../src/analyzers/function-shape.js';
+import { analyzeFunctionShape, measureFunctionShapes } from '../../src/analyzers/function-shape.js';
 import { baselineWith, inputFromSource } from '../helpers.js';
 
 describe('function-shape analyzer', () => {
@@ -48,5 +48,31 @@ describe('function-shape analyzer', () => {
 export function b(p: number, q: number, r: number) { return p + q + r; }`;
     const result = await analyzeFunctionShape(inputFromSource('inline.ts', src));
     expect(result.metrics.maxParameterCount).toBe(3);
+  });
+
+  it('excludes Cerberus marker comments from body length', () => {
+    const withoutMarker = `export function run() {
+  work();
+}`;
+    const withMarker = `export function run() {
+  // TODO: cerberus(cognitive-complexity=22, limit=15, attempt=3/2)
+  work();
+}`;
+    const plainShape = measureFunctionShapes('inline.ts', withoutMarker)[0];
+    const markedShape = measureFunctionShapes('inline.ts', withMarker)[0];
+    expect(markedShape?.bodyLines).toBe(plainShape?.bodyLines);
+  });
+
+  it('counts malformed hand-written marker comments toward body length', () => {
+    const withoutMarker = `export function run() {
+  work();
+}`;
+    const withMalformedMarker = `export function run() {
+  // TODO: cerberus(whatever)
+  work();
+}`;
+    const plainShape = measureFunctionShapes('inline.ts', withoutMarker)[0];
+    const malformedShape = measureFunctionShapes('inline.ts', withMalformedMarker)[0];
+    expect(malformedShape?.bodyLines).toBe((plainShape?.bodyLines ?? 0) + 1);
   });
 });

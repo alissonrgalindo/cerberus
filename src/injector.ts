@@ -2,7 +2,7 @@ import { execaSync } from 'execa';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import type { FileReport } from './engine.js';
-import type { Violation } from './types.js';
+import { CERBERUS_MARKER_RE, type Violation } from './types.js';
 
 /** Builds the debt comment injected above a problematic symbol. */
 export function buildTodoComment(v: Violation, attempt: string): string {
@@ -21,7 +21,7 @@ function targetLine(v: Violation): number {
 /**
  * Inserts `// TODO: cerberus(...)` comments above each violating line.
  * Inserts bottom-up so earlier line numbers stay valid, matches indentation,
- * and skips a comment that is already present directly above the target.
+ * and refreshes an analyzer marker already present directly above the target.
  */
 export function injectTodos(content: string, violations: Violation[], attempt: string): string {
   const lines = content.split('\n');
@@ -36,13 +36,40 @@ export function injectTodos(content: string, violations: Violation[], attempt: s
   }
 
   for (const ln of [...byLine.keys()].sort((a, b) => b - a)) {
-    const idx = Math.min(Math.max(ln - 1, 0), lines.length);
+    let idx = Math.min(Math.max(ln - 1, 0), lines.length);
+    while (idx < lines.length && CERBERUS_MARKER_RE.test(lines[idx] ?? '')) idx += 1;
     const indent = lines[idx]?.match(/^\s*/)?.[0] ?? '';
-    const aboveText = lines[idx - 1] ?? '';
-    const comments = byLine
-      .get(ln)!
-      .filter((c) => !aboveText.includes(c))
-      .map((c) => indent + c);
+    const analyzersAbove = new Map<string, number>();
+
+    // Only the contiguous Cerberus marker block immediately above the target
+    // belongs to this site. Track line indexes so stale values can be refreshed.
+    for (let aboveIdx = idx - 1; aboveIdx >= 0; aboveIdx -= 1) {
+      const line = lines[aboveIdx] ?? '';
+      if (!CERBERUS_MARKER_RE.test(line)) break;
+      const analyzer = line.match(/\/\/ TODO: cerberus\(([^=\s]+)=/)?.[1];
+      if (analyzer !== undefined) analyzersAbove.set(analyzer, aboveIdx);
+    }
+
+    const comments: string[] = [];
+    const pendingAnalyzers = new Map<string, number>();
+    for (const comment of byLine.get(ln)!) {
+      const analyzer = comment.match(/\/\/ TODO: cerberus\(([^=\s]+)=/)?.[1];
+      const markerIdx = analyzer === undefined ? undefined : analyzersAbove.get(analyzer);
+      if (markerIdx !== undefined) {
+        const markerIndent = lines[markerIdx]?.match(/^\s*/)?.[0] ?? indent;
+        lines[markerIdx] = markerIndent + comment;
+        continue;
+      }
+
+      const pendingIdx = analyzer === undefined ? undefined : pendingAnalyzers.get(analyzer);
+      if (pendingIdx !== undefined) {
+        comments[pendingIdx] = indent + comment;
+        continue;
+      }
+
+      if (analyzer !== undefined) pendingAnalyzers.set(analyzer, comments.length);
+      comments.push(indent + comment);
+    }
     if (comments.length > 0) lines.splice(idx, 0, ...comments);
   }
 

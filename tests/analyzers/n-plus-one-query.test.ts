@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { analyzeNPlusOneQuery } from '../../src/analyzers/n-plus-one-query.js';
-import { inputFromSource } from '../helpers.js';
+import { baselineWith, inputFromSource } from '../helpers.js';
 
 describe('n-plus-one-query analyzer', () => {
   it('flags await db.* inside for-of', async () => {
@@ -72,6 +72,43 @@ export async function load(ids: number[]) {
   }
 }`;
     const result = await analyzeNPlusOneQuery(inputFromSource('lib/x.ts', src));
+    expect(result.passed).toBe(false);
     expect(result.metrics.nPlusOneCount).toBe(2);
+    expect(result.violations).toHaveLength(2);
+  });
+
+  it('passes when the N+1 count matches the baseline', async () => {
+    const src = `
+export async function load(ids: number[]) {
+  for (const id of ids) {
+    await db.query.users.findFirst({ where: { id } });
+  }
+}`;
+    const result = await analyzeNPlusOneQuery(
+      inputFromSource('lib/x.ts', src, {
+        baseline: baselineWith({ nPlusOneQuery: { count: 1 } }),
+      }),
+    );
+    expect(result.passed).toBe(true);
+    expect(result.metrics.nPlusOneCount).toBe(1);
+    expect(result.violations).toHaveLength(0);
+  });
+
+  it('flags all findings when the N+1 count exceeds the baseline', async () => {
+    const src = `
+export async function load(ids: number[]) {
+  for (const id of ids) {
+    await db.query.users.findFirst({ where: { id } });
+    await db.query.teams.findFirst({ where: { id } });
+  }
+}`;
+    const result = await analyzeNPlusOneQuery(
+      inputFromSource('lib/x.ts', src, {
+        baseline: baselineWith({ nPlusOneQuery: { count: 1 } }),
+      }),
+    );
+    expect(result.passed).toBe(false);
+    expect(result.metrics.nPlusOneCount).toBe(2);
+    expect(result.violations).toHaveLength(2);
   });
 });

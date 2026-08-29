@@ -28,6 +28,9 @@ export type Violation = {
   severity?: ViolationSeverity;
 };
 
+/** Exact shape of a Cerberus debt marker injected into source code. */
+export const CERBERUS_MARKER_RE = /^\s*\/\/ TODO: cerberus\([^=\s]+=\d+, limit=\d+, attempt=\d+\/\d+\)\s*$/;
+
 export type AnalyzerName =
   | 'cognitive'
   | 'cyclomatic'
@@ -118,6 +121,9 @@ export type FileBaseline = {
     silentCatch?: { count: number };
     /** Optional — added in v1.3; absent on older baselines (treat missing as 0). Delta-grandfathers legacy shallow modules. */
     shallowModule?: { count: number };
+    /** Optional — added in v1.4; delta-grandfathers legacy N+1 queries. Omitted when count is 0 (absent
+     * means 0) so full baseline regens stay diff-minimal. */
+    nPlusOneQuery?: { count: number };
   };
 };
 

@@ -1,13 +1,19 @@
 import { Node, SyntaxKind } from 'ts-morph';
-import { functionBaselineFloor, type AnalyzerInput, type AnalyzerResult, type Violation } from '../types.js';
+import {
+  CERBERUS_MARKER_RE,
+  functionBaselineFloor,
+  type AnalyzerInput,
+  type AnalyzerResult,
+  type Violation,
+} from '../types.js';
 import { createSourceFile } from './ts-project.js';
 
 /**
  * Function-shape checks from Clean Code §3:
  *
  *   - function-length: warn at > 40 source lines, fail at > 80 (defaults; configurable).
- *     Measured as raw line span between `{` and `}` of the body — comments and
- *     blank lines count, matching how reviewers visually scan a function.
+ *     Measured as the line span between `{` and `}` of the body. Human comments
+ *     and blank lines count; injected Cerberus marker comments do not.
  *
  *   - parameter-count: fail at > 4 parameters (Uncle Bob: "ideal is zero — three
  *     is the maximum, and that's already suspect"). 5+ is the line where
@@ -46,6 +52,7 @@ function functionName(node: Node): string {
 
 export function measureFunctionShapes(filePath: string, fileContent: string): FunctionShape[] {
   const sourceFile = createSourceFile(filePath, fileContent);
+  const fileLines = fileContent.split('\n');
   const shapes: FunctionShape[] = [];
 
   for (const node of sourceFile.getDescendants()) {
@@ -62,7 +69,12 @@ export function measureFunctionShapes(filePath: string, fileContent: string): Fu
       const body = node.getBody();
       if (!body) continue; // overload signature with no body
       if (Node.isBlock(body)) {
-        bodyLines = body.getEndLineNumber() - body.getStartLineNumber() + 1;
+        const bodyStartLine = body.getStartLineNumber();
+        const bodyEndLine = body.getEndLineNumber();
+        const markerLines = fileLines
+          .slice(bodyStartLine - 1, bodyEndLine)
+          .filter((line) => CERBERUS_MARKER_RE.test(line)).length;
+        bodyLines = bodyEndLine - bodyStartLine + 1 - markerLines;
       } else {
         // Arrow with expression body: single-line.
         bodyLines = 1;
