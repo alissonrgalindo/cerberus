@@ -2,7 +2,7 @@
 
 // src/cli.ts
 import { existsSync as existsSync11, readFileSync as readFileSync15 } from "fs";
-import { basename as basename3, isAbsolute as isAbsolute3, relative as relative7, resolve as resolve6 } from "path";
+import { basename as basename4, isAbsolute as isAbsolute3, relative as relative7, resolve as resolve6 } from "path";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import chalk2 from "chalk";
@@ -434,8 +434,9 @@ function analyzeDuplication(files, cwd, config) {
 
 // src/analyzers/migration-safety.ts
 import { readFileSync as readFileSync3 } from "fs";
-import { relative as relative4 } from "path";
+import { basename, dirname as dirname2, relative as relative4 } from "path";
 var SQL_EXT = /\.sql$/i;
+var LOWERCASE_SQL_IDENTIFIER = /^[a-z_][a-z0-9_]*$/;
 var PATTERNS = [
   {
     id: "drop-column",
@@ -469,6 +470,63 @@ var PATTERNS = [
   }
 ];
 var SET_NOT_NULL_RE = /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?["'`]?(\w+)["'`]?\s+ALTER\s+COLUMN\s+["'`]?(\w+)["'`]?\s+SET\s+NOT\s+NULL/gi;
+var NULL_BACKFILL_RE = /^UPDATE\s+["'`]?(\w+)["'`]?\s+SET\s+["'`]?(\w+)["'`]?\s*=\s*(?:'[^']+'|[-+]?\d+(?:\.\d+)?|TRUE|FALSE)\s+WHERE\s+["'`]?(\w+)["'`]?\s+IS\s+NULL\s*;$/i;
+var TABLE_WRITE_RE = /(?:^|;)\s*(?:UPDATE|INSERT\s+INTO)\s+["'`]?(\w+)["'`]?/gi;
+function migrationOrder(file, cwd) {
+  const rel = toPosix(relative4(cwd, file));
+  const match = /^(\d+)/.exec(basename(rel));
+  return match ? { directory: dirname2(rel), sequence: Number(match[1]) } : null;
+}
+function stripComments(sql) {
+  return sql.replace(/\/\*[\s\S]*?\*\//g, (comment) => comment.replace(/[^\n]/g, " ")).replace(/--.*$/gm, "");
+}
+function collectTableWrites(sql, order, priorBackfills) {
+  const counts = /* @__PURE__ */ new Map();
+  if (!order) return counts;
+  TABLE_WRITE_RE.lastIndex = 0;
+  let write;
+  while ((write = TABLE_WRITE_RE.exec(sql)) !== null) {
+    priorBackfills.clear();
+    const table = write[1].toLowerCase();
+    counts.set(table, (counts.get(table) ?? 0) + 1);
+  }
+  return counts;
+}
+function recordBackfillProof(sql, order, tableWriteCounts, priorBackfills) {
+  if (!order || /\$(?:[A-Za-z_]\w*)?\$/.test(sql) || /(?:UPDATE|INSERT\s+INTO)\s+["'`]?\w+["'`]?\s*\./i.test(sql)) return;
+  const statements = sql.split(";").map((statement) => statement.trim()).filter(Boolean);
+  if (statements.some((statement) => (statement.match(/'/g)?.length ?? 0) % 2 !== 0)) return;
+  for (const statement of statements) {
+    const backfill = `${statement};`.match(NULL_BACKFILL_RE);
+    if (!isSafeBackfill(backfill, tableWriteCounts)) continue;
+    priorBackfills.set(`${order.directory}:${backfill[1]}.${backfill[2]}`, order.sequence);
+  }
+}
+function isSafeBackfill(backfill, tableWriteCounts) {
+  if (!backfill) return false;
+  const table = backfill[1];
+  const column = backfill[2];
+  return LOWERCASE_SQL_IDENTIFIER.test(table) && LOWERCASE_SQL_IDENTIFIER.test(column) && column === backfill[3] && tableWriteCounts.get(table) === 1;
+}
+function addSetNotNullViolations(cleaned, rel, order, priorBackfills) {
+  const violations = [];
+  for (const finding of findSetNotNullWithoutDefault(cleaned)) {
+    const backfillSequence = priorBackfills.get(`${order?.directory}:${finding.table}.${finding.column}`);
+    if (order && backfillSequence !== void 0 && backfillSequence < order.sequence) continue;
+    violations.push({
+      file: rel,
+      violation: {
+        analyzer: "migration-safety",
+        location: `${rel}:${finding.line}`,
+        current: 1,
+        threshold: 0,
+        severity: "security",
+        suggestion: `${finding.describe}. Existing NULL rows will fail the constraint. Add a DEFAULT in the same ALTER or backfill in a prior migration.`
+      }
+    });
+  }
+  return violations;
+}
 function findSetNotNullWithoutDefault(sql) {
   const out = [];
   let m;
@@ -480,7 +538,7 @@ function findSetNotNullWithoutDefault(sql) {
       `ALTER\\s+COLUMN\\s+["'\`]?${m[2]}["'\`]?\\s+SET\\s+DEFAULT`,
       "i"
     ).test(stmt);
-    if (!hasDefault) out.push({ line, describe: `SET NOT NULL ${m[1]}.${m[2]} (no DEFAULT)` });
+    if (!hasDefault) out.push({ line, table: m[1], column: m[2], describe: `SET NOT NULL ${m[1]}.${m[2]} (no DEFAULT)` });
   }
   return out;
 }
@@ -499,14 +557,22 @@ function readFromDisk(abs) {
   }
 }
 function analyzeMigrationSafety(files, cwd, readContent = readFromDisk) {
-  const sqlFiles = files.filter((f) => SQL_EXT.test(f));
+  const sqlFiles = files.filter((f) => SQL_EXT.test(f)).sort((a, b) => {
+    const left = migrationOrder(a, cwd);
+    const right = migrationOrder(b, cwd);
+    if (left?.directory === right?.directory && left && right) return left.sequence - right.sequence;
+    return toPosix(relative4(cwd, a)).localeCompare(toPosix(relative4(cwd, b)));
+  });
   if (sqlFiles.length === 0) return [];
   const out = [];
+  const priorBackfills = /* @__PURE__ */ new Map();
   for (const abs of sqlFiles) {
     const sql = readContent(abs);
     if (sql === null) continue;
     const rel = toPosix(relative4(cwd, abs));
-    const cleaned = sql.replace(/--.*$/gm, "");
+    const order = migrationOrder(abs, cwd);
+    const cleaned = stripComments(sql);
+    const tableWriteCounts = collectTableWrites(cleaned, order, priorBackfills);
     for (const pattern of PATTERNS) {
       pattern.regex.lastIndex = 0;
       let m;
@@ -522,17 +588,8 @@ function analyzeMigrationSafety(files, cwd, readContent = readFromDisk) {
         out.push({ file: rel, violation });
       }
     }
-    for (const f of findSetNotNullWithoutDefault(cleaned)) {
-      const violation = {
-        analyzer: "migration-safety",
-        location: `${rel}:${f.line}`,
-        current: 1,
-        threshold: 0,
-        severity: "security",
-        suggestion: `${f.describe}. Existing NULL rows will fail the constraint. Add a DEFAULT in the same ALTER or backfill in a prior migration.`
-      };
-      out.push({ file: rel, violation });
-    }
+    out.push(...addSetNotNullViolations(cleaned, rel, order, priorBackfills));
+    recordBackfillProof(cleaned, order, tableWriteCounts, priorBackfills);
   }
   return out;
 }
@@ -540,11 +597,11 @@ function analyzeMigrationSafety(files, cwd, readContent = readFromDisk) {
 // src/analyzers/new-dependency.ts
 import { execaSync as execaSync3 } from "execa";
 import { existsSync as existsSync4, readFileSync as readFileSync5 } from "fs";
-import { basename, dirname as dirname3, join as join5, relative as relative5 } from "path";
+import { basename as basename2, dirname as dirname4, join as join5, relative as relative5 } from "path";
 
 // src/analyzers/python.ts
 import { existsSync as existsSync3, readFileSync as readFileSync4 } from "fs";
-import { dirname as dirname2, isAbsolute, join as join4, resolve } from "path";
+import { dirname as dirname3, isAbsolute, join as join4, resolve } from "path";
 var SUPPRESS = (kind) => new RegExp(`(?:cerberus|quality-gate)-allow:\\s*${kind}\\b`);
 function parseLines(content) {
   return content.split("\n").map((text) => {
@@ -912,7 +969,7 @@ function collectPyDeclaredDeps(fromDir) {
       } catch {
       }
     }
-    const parent = dirname2(dir);
+    const parent = dirname3(dir);
     if (parent === dir) break;
     dir = parent;
   }
@@ -931,7 +988,7 @@ var IMPORT_RE = /^\s*import\s+([\w.]+(?:\s*,\s*[\w.]+)*)/;
 var FROM_RE = /^\s*from\s+([\w.]+)\s+import\b/;
 async function analyzePyHallucinatedImport(input) {
   const absFilePath = isAbsolute(input.filePath) ? input.filePath : resolve(process.cwd(), input.filePath);
-  const fileDir = dirname2(absFilePath);
+  const fileDir = dirname3(absFilePath);
   const { declared, foundManifest, rootDir } = collectPyDeclaredDeps(fileDir);
   if (!foundManifest) {
     return { passed: true, violations: [], metrics: { hallucinatedImportCount: 0 } };
@@ -1013,7 +1070,7 @@ function findLockfiles(fromDir, names = LOCKFILES) {
       const p = join5(dir, name);
       if (existsSync4(p)) found.push(p);
     }
-    const parent = dirname3(dir);
+    const parent = dirname4(dir);
     if (parent === dir) break;
     dir = parent;
   }
@@ -1048,7 +1105,7 @@ function analyzePyManifest(abs, cwd, readContent) {
   const before = head ? extractDeclaredPyDeps("pyproject.toml", head) : /* @__PURE__ */ new Set();
   const added = [...current].filter((n) => !before.has(n));
   if (added.length === 0) return out;
-  const lockfiles = findLockfiles(dirname3(abs), PY_LOCKFILES);
+  const lockfiles = findLockfiles(dirname4(abs), PY_LOCKFILES);
   if (lockfiles.length === 0) return out;
   const lockContents = lockfiles.map((p) => {
     try {
@@ -1078,8 +1135,8 @@ function analyzePyManifest(abs, cwd, readContent) {
 }
 function analyzeNewDependency(stagedFiles, cwd, readContent = readFromDisk2) {
   const out = [];
-  const manifests = stagedFiles.filter((f) => basename(f) === "package.json");
-  const pyManifests = stagedFiles.filter((f) => basename(f) === "pyproject.toml");
+  const manifests = stagedFiles.filter((f) => basename2(f) === "package.json");
+  const pyManifests = stagedFiles.filter((f) => basename2(f) === "pyproject.toml");
   for (const abs of pyManifests) out.push(...analyzePyManifest(abs, cwd, readContent));
   for (const abs of manifests) {
     const rel = toPosix(relative5(cwd, abs));
@@ -1092,7 +1149,7 @@ function analyzeNewDependency(stagedFiles, cwd, readContent = readFromDisk2) {
     const before = depNames(previous);
     const added = [...depNames(current)].filter((n) => !before.has(n));
     if (added.length === 0) continue;
-    const lockfiles = findLockfiles(dirname3(abs));
+    const lockfiles = findLockfiles(dirname4(abs));
     if (lockfiles.length === 0) continue;
     const lockContents = lockfiles.map((p) => {
       try {
@@ -1120,7 +1177,7 @@ function analyzeNewDependency(stagedFiles, cwd, readContent = readFromDisk2) {
 
 // src/analyzers/secret-in-diff.ts
 import { readFileSync as readFileSync6 } from "fs";
-import { basename as basename2, relative as relative6 } from "path";
+import { basename as basename3, relative as relative6 } from "path";
 var SUPPRESSION = /(?:cerberus|quality-gate)-allow:\s*secret\b/;
 var PATTERNS2 = [
   {
@@ -1222,7 +1279,7 @@ function analyzeSecretInDiff(files, cwd, readContent = readFromDisk3) {
   const out = [];
   for (const abs of files) {
     const rel = toPosix(relative6(cwd, abs));
-    const name = basename2(abs);
+    const name = basename3(abs);
     if (isEnvFile(name)) {
       const violation = {
         analyzer: "secret-in-diff",
@@ -1815,7 +1872,7 @@ async function analyzeFunctionShape(input) {
 
 // src/analyzers/hallucinated-import.ts
 import { existsSync as existsSync8, readFileSync as readFileSync10 } from "fs";
-import { dirname as dirname4, isAbsolute as isAbsolute2, join as join9, resolve as resolve2 } from "path";
+import { dirname as dirname5, isAbsolute as isAbsolute2, join as join9, resolve as resolve2 } from "path";
 import { Node as Node4, SyntaxKind as SyntaxKind4 } from "ts-morph";
 var NODE_BUILTINS = /* @__PURE__ */ new Set([
   "assert",
@@ -1895,7 +1952,7 @@ function collectDeclaredDeps(fromDir) {
       } catch {
       }
     }
-    const parent = dirname4(dir);
+    const parent = dirname5(dir);
     if (parent === dir) break;
     dir = parent;
   }
@@ -1904,7 +1961,7 @@ function collectDeclaredDeps(fromDir) {
 async function analyzeHallucinatedImport(input) {
   const sourceFile = createSourceFile(input.filePath, input.fileContent);
   const absFilePath = isAbsolute2(input.filePath) ? input.filePath : resolve2(process.cwd(), input.filePath);
-  const startDir = dirname4(absFilePath);
+  const startDir = dirname5(absFilePath);
   const { declared, foundPackageJson } = collectDeclaredDeps(startDir);
   const findings = [];
   const collect = (spec, line) => {
@@ -3046,7 +3103,7 @@ function isAnalyzable(absPath) {
 }
 function selectSecurityFiles(allStaged, cwd, config) {
   const isBinaryAsset = makeBinaryAssetMatcher(config.binaryAssets);
-  return allStaged.filter((f) => isEnvFile(basename3(f)) || !isBinaryAsset(relKey(cwd, f)));
+  return allStaged.filter((f) => isEnvFile(basename4(f)) || !isBinaryAsset(relKey(cwd, f)));
 }
 function bypassActive() {
   return process.env.CERBERUS_BYPASS === "1" || process.env.QUALITY_GATE_BYPASS === "1";
